@@ -2326,6 +2326,82 @@
           </h2>
           <div id="detailNegotiationContent"></div>
         </div>
+        <div id="detailSimulatorWrap" class="detail-body" style="margin-bottom: 1rem" hidden>
+          <h2>🤝 협상 가격 시뮬레이터</h2>
+          <p style="font-size: 0.85rem; color: var(--muted); margin: 0 0 1rem; line-height: 1.55">
+            협의된 조건을 조정하면 최종 적정가를 다시 계산합니다.
+          </p>
+
+          <div class="field" id="simProfitWrap">
+            <label style="font-size: 0.85rem; font-weight: 600">
+              월 영업이익 (만 원)
+              <span id="simProfitHint" style="font-weight: 400; color: var(--muted); font-size: 0.78rem"></span>
+            </label>
+            <input type="range" id="simProfit" min="0" max="2000" step="10" style="width: 100%; accent-color: var(--navy)" />
+            <div style="display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--muted); margin-top: 0.25rem">
+              <span id="simProfitMin"></span>
+              <span id="simProfitVal" style="font-weight: 700; color: var(--navy); font-size: 0.85rem"></span>
+              <span id="simProfitMax"></span>
+            </div>
+          </div>
+
+          <div class="val-field-block" id="simTrendWrap">
+            <span class="val-block-label">합의된 매출 추세</span>
+            <div class="val-option-row">
+              <input type="radio" name="simTrend" id="simTrendUp" value="up" class="val-radio-input" />
+              <label class="val-option" for="simTrendUp">📈 성장</label>
+              <input type="radio" name="simTrend" id="simTrendStable" value="stable" class="val-radio-input" />
+              <label class="val-option" for="simTrendStable">📊 안정</label>
+              <input type="radio" name="simTrend" id="simTrendDown" value="down" class="val-radio-input" />
+              <label class="val-option" for="simTrendDown">📉 하락</label>
+            </div>
+          </div>
+
+          <div class="val-field-block" id="simLeaseWrap">
+            <span class="val-block-label">임대 재계약 확약 여부</span>
+            <div class="val-option-row">
+              <input type="radio" name="simLease" id="simLeaseCertain" value="certain" class="val-radio-input" />
+              <label class="val-option" for="simLeaseCertain">확실</label>
+              <input type="radio" name="simLease" id="simLeaseUncertain" value="uncertain" class="val-radio-input" />
+              <label class="val-option" for="simLeaseUncertain">불확실</label>
+            </div>
+          </div>
+
+          <div class="field" id="simLiabWrap">
+            <label style="font-size: 0.85rem; font-weight: 600"> 최종 합의 승계 부채 (만 원) </label>
+            <input type="number" id="simLiabilities" min="0" step="100" inputmode="numeric" placeholder="0" class="field" style="width: 100%" />
+          </div>
+
+          <div class="val-field-block" id="simEquipWrap">
+            <span class="val-block-label">실사 후 설비 상태</span>
+            <div class="val-option-row">
+              <input type="radio" name="simEquip" id="simEquipNew" value="new" class="val-radio-input" />
+              <label class="val-option" for="simEquipNew">양호</label>
+              <input type="radio" name="simEquip" id="simEquipMid" value="mid" class="val-radio-input" />
+              <label class="val-option" for="simEquipMid">보통</label>
+              <input type="radio" name="simEquip" id="simEquipOld" value="old" class="val-radio-input" />
+              <label class="val-option" for="simEquipOld">노후</label>
+            </div>
+          </div>
+
+          <div
+            id="simResult"
+            style="
+              margin-top: 1rem;
+              padding: 1rem 1rem 1rem calc(1rem - 3px);
+              background: var(--navy-tint);
+              border-left: 3px solid var(--navy);
+              border-radius: var(--radius);
+            "
+          >
+            <p style="margin: 0 0 0.35rem; font-size: 0.75rem; font-weight: 700; color: var(--navy); text-transform: uppercase; letter-spacing: 0.05em">
+              협상 후 추정 가격
+            </p>
+            <p id="simResultRange" style="margin: 0 0 0.35rem; font-size: 1.1rem; font-weight: 800; color: var(--text); line-height: 1.4"></p>
+            <p id="simResultDiff" style="margin: 0; font-size: 0.82rem; font-weight: 600"></p>
+            <p style="margin: 0.5rem 0 0; font-size: 0.72rem; color: var(--muted)">※ 협상 시뮬레이터 결과는 참고용이며 법적 효력이 없습니다.</p>
+          </div>
+        </div>
         <h2>상세 설명</h2>
         <p id="detailDescription"></p>
         <div class="detail-contact" id="detailContactWrap" hidden>
@@ -4393,6 +4469,115 @@
         return html;
       }
 
+      function initSimulator(item) {
+        var wrap = $("detailSimulatorWrap");
+        if (!wrap) return;
+
+        var vd = computeValuationDetails(item);
+        if (!vd) {
+          wrap.hidden = true;
+          return;
+        }
+        wrap.hidden = false;
+
+        var baseProfit = Math.round(getAdjustedMonthlyProfitFromItem(item) || 0);
+        var maxProfit = Math.max(Math.round(baseProfit * 2), 500);
+
+        var slider = $("simProfit");
+        if (!slider) return;
+        slider.min = 0;
+        slider.max = maxProfit;
+        slider.step = 10;
+        slider.value = String(baseProfit);
+        if ($("simProfitMin")) $("simProfitMin").textContent = "0";
+        if ($("simProfitMax")) $("simProfitMax").textContent = formatManWon(maxProfit) + "만";
+        if ($("simProfitHint")) $("simProfitHint").textContent = "(기준: " + formatManWon(baseProfit) + "만 원)";
+        if ($("simProfitVal")) $("simProfitVal").textContent = formatManWon(baseProfit) + "만 원";
+
+        var trend = item.revenueTrend || "stable";
+        var trendEl = document.querySelector('input[name="simTrend"][value="' + trend + '"]');
+        if (trendEl) trendEl.checked = true;
+
+        var lease = item.leaseRenewal === "certain" ? "certain" : "uncertain";
+        var leaseEl = document.querySelector('input[name="simLease"][value="' + lease + '"]');
+        if (leaseEl) leaseEl.checked = true;
+
+        var equip = item.equipmentAge || "mid";
+        var equipEl = document.querySelector('input[name="simEquip"][value="' + equip + '"]');
+        if (equipEl) equipEl.checked = true;
+
+        if ($("simLiabilities")) $("simLiabilities").value = item.liabilities > 0 ? item.liabilities : 0;
+
+        runSimulator(item);
+      }
+
+      function runSimulator(item) {
+        var origVd = computeValuationDetails(item);
+        if (!origVd) return;
+        var origLow = Math.min(origVd.dcfPrice, origVd.multiplePrice);
+
+        var simProfitEl = $("simProfit");
+        var simProfitVal = simProfitEl ? parseFloat(simProfitEl.value) || 0 : 0;
+        var trendChecked = document.querySelector('input[name="simTrend"]:checked');
+        var simTrend = (trendChecked && trendChecked.value) || "stable";
+        var leaseChecked = document.querySelector('input[name="simLease"]:checked');
+        var simLease = (leaseChecked && leaseChecked.value) || "uncertain";
+        var equipChecked = document.querySelector('input[name="simEquip"]:checked');
+        var simEquip = (equipChecked && equipChecked.value) || "mid";
+        var simLiabEl = $("simLiabilities");
+        var simLiab = simLiabEl ? parseFloat(simLiabEl.value) || 0 : 0;
+
+        if ($("simProfitVal")) $("simProfitVal").textContent = formatManWon(simProfitVal) + "만 원";
+
+        var simItem = Object.assign({}, item, {
+          monthlyProfit: simProfitVal,
+          profitInputMode: "monthly",
+          ownerWorks: false,
+          ownerWorkHours: null,
+          revenueTrend: simTrend,
+          leaseRenewal: simLease,
+          equipmentAge: simEquip,
+          liabilities: simLiab,
+        });
+
+        var simVd = computeValuationDetails(simItem);
+        if (!simVd) {
+          if ($("simResultRange")) $("simResultRange").textContent = "이익 정보를 확인해 주세요.";
+          if ($("simResultDiff")) $("simResultDiff").textContent = "";
+          return;
+        }
+
+        var simLow = Math.min(simVd.dcfPrice, simVd.multiplePrice);
+        var simHigh = Math.max(simVd.dcfPrice, simVd.multiplePrice);
+        var diff = Math.round(simLow - origLow);
+
+        if ($("simResultRange")) {
+          $("simResultRange").innerHTML =
+            '<span style="color:var(--orange)">' +
+            formatManWon(simLow) +
+            '</span>만 원 ~ ' +
+            '<span style="color:var(--orange)">' +
+            formatManWon(simHigh) +
+            "</span>만 원";
+        }
+
+        var diffText = "";
+        if (diff > 0) {
+          diffText = "원래 추정가보다 +" + formatManWon(diff) + "만 원 높아요";
+        } else if (diff < 0) {
+          diffText = "원래 추정가보다 " + formatManWon(diff) + "만 원 낮아요";
+        } else {
+          diffText = "원래 추정가와 동일해요";
+        }
+        var diffEl = $("simResultDiff");
+        if (diffEl) {
+          diffEl.textContent = diffText;
+          if (diff > 0) diffEl.style.color = "var(--navy)";
+          else if (diff < 0) diffEl.style.color = "var(--orange)";
+          else diffEl.style.color = "var(--muted)";
+        }
+      }
+
       async function openDetail(id) {
         var item = findById(id);
         if (!item) {
@@ -4478,6 +4663,8 @@
         } else if (negWrap) {
           negWrap.hidden = true;
         }
+
+        initSimulator(item);
 
         var desc = (item.description || "").trim();
         $("detailDescription").textContent = desc || "등록된 상세 설명이 없습니다.";
@@ -5319,6 +5506,34 @@
         } catch (err) {
           console.error(err);
         }
+      }
+
+      function setupSimulatorListeners() {
+        if ($("simProfit")) {
+          $("simProfit").addEventListener("input", function () {
+            var item = findById($("viewDetail") && $("viewDetail").dataset.currentId);
+            if (item) runSimulator(item);
+          });
+        }
+        ["simTrend", "simLease", "simEquip"].forEach(function (name) {
+          document.querySelectorAll('input[name="' + name + '"]').forEach(function (el) {
+            el.addEventListener("change", function () {
+              var item = findById($("viewDetail") && $("viewDetail").dataset.currentId);
+              if (item) runSimulator(item);
+            });
+          });
+        });
+        if ($("simLiabilities")) {
+          $("simLiabilities").addEventListener("input", function () {
+            var item = findById($("viewDetail") && $("viewDetail").dataset.currentId);
+            if (item) runSimulator(item);
+          });
+        }
+      }
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", setupSimulatorListeners);
+      } else {
+        setupSimulatorListeners();
       }
 
       async function initApp() {
