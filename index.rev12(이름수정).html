@@ -2300,6 +2300,32 @@
       </div>
       <div class="detail-body">
         <div id="detailValuationWrap" class="detail-valuation" hidden></div>
+        <div
+          id="detailNegotiationWrap"
+          hidden
+          style="
+            margin-bottom: 1.25rem;
+            padding: 1rem 1rem 1rem calc(1rem - 3px);
+            background: #fff3ee;
+            border-left: 3px solid var(--orange);
+            border-radius: var(--radius);
+            font-size: 0.9rem;
+          "
+        >
+          <h2
+            style="
+              font-size: 0.8rem;
+              font-weight: 700;
+              color: var(--orange);
+              text-transform: uppercase;
+              letter-spacing: 0.06em;
+              margin: 0 0 0.65rem;
+            "
+          >
+            💡 협상 가능 포인트
+          </h2>
+          <div id="detailNegotiationContent"></div>
+        </div>
         <h2>상세 설명</h2>
         <p id="detailDescription"></p>
         <div class="detail-contact" id="detailContactWrap" hidden>
@@ -4237,6 +4263,136 @@
         return null;
       }
 
+      function buildNegotiationPoints(item) {
+        if (!item) return "";
+        var buyer = [];
+        var seller = [];
+        var lr = item.leaseRenewal;
+        if (lr === "uncertain" || lr === "unknown") {
+          buyer.push({
+            title: "임대 재계약 불확실",
+            desc:
+              "계약 만료 후 재계약 여부가 불확실합니다.<br/>임대인과의 사전 확약서 요청 또는 가격 인하 협상 근거로 활용하세요.",
+          });
+        }
+        if (item.deliveryRatio === "high") {
+          buyer.push({
+            title: "배달 매출 비중 높음",
+            desc:
+              "배달앱 수수료·정책 변화에 취약한 구조입니다.<br/>직접 매출 비중 전환 비용을 감안한 가격 조정을 협상할 수 있습니다.",
+          });
+        }
+        if (item.equipmentAge === "old") {
+          buyer.push({
+            title: "설비·인테리어 노후",
+            desc:
+              "인수 후 교체 비용이 발생할 수 있습니다.<br/>예상 교체 비용 견적을 받아 가격 차감 근거로 사용하세요.",
+          });
+        }
+        if (item.revenueTrend === "down") {
+          buyer.push({
+            title: "매출 감소 추세",
+            desc:
+              "최근 매출이 줄고 있습니다.<br/>감소 원인 파악 후 반등 가능성이 낮다면 보수적 추정가 이하 협상도 가능합니다.",
+          });
+        }
+        if (item.revenueVerifiable === false) {
+          buyer.push({
+            title: "매출 증빙 어려움",
+            desc:
+              "홈택스·카드매출 증빙이 없으면 실제 수익을<br/>검증하기 어렵습니다. 증빙 제출을 요구하거나<br/>그에 상응하는 가격 할인을 요청할 수 있습니다.",
+          });
+        }
+        if (item.staffStays === "uncertain") {
+          buyer.push({
+            title: "직원 인수 불확실",
+            desc:
+              "핵심 직원이 떠날 경우 운영 공백이 생깁니다.<br/>신규 채용 비용을 감안해 가격 조정을 협상하세요.",
+          });
+        }
+        if (item.liabilities != null && item.liabilities > 0) {
+          buyer.push({
+            title: "승계 부채·보증금 있음",
+            desc:
+              "승계 부채 " +
+              formatManWon(item.liabilities) +
+              "만 원이 포함됩니다.<br/>부채 규모를 정확히 확인하고 실질 인수가를<br/>계산해 협상에 활용하세요.",
+          });
+        }
+        if (item.revenueTrend === "up") {
+          seller.push({
+            title: "매출 성장 추세",
+            desc:
+              "최근 매출이 꾸준히 늘고 있습니다.<br/>성장 모멘텀이 지속될 경우 향후 수익이 더 커질 수 있어<br/>현재 추정가보다 높은 가격을 요구할 근거가 됩니다.",
+          });
+        }
+        if (lr === "certain" && item.leaseRemainingMonths != null && item.leaseRemainingMonths >= 24) {
+          seller.push({
+            title: "임대 안정성 높음",
+            desc:
+              "재계약이 확실하고 잔여 기간이 " +
+              item.leaseRemainingMonths +
+              "개월입니다.<br/>인수자 입장에서 안정적 운영이 가능하므로<br/>프리미엄 가격 협상의 근거가 됩니다.",
+          });
+        }
+        if (item.revenueVerifiable === true) {
+          seller.push({
+            title: "매출 증빙 가능",
+            desc:
+              "홈택스·카드매출로 수익을 객관적으로 증명할 수 있습니다.<br/>신뢰도 높은 거래 조건으로 적정 추정가 이상도 협상 가능합니다.",
+          });
+        }
+        var sc = item.staffCount != null ? item.staffCount : 0;
+        if (sc >= 2 && item.staffStays === "yes") {
+          seller.push({
+            title: "숙련된 직원 인수",
+            desc:
+              "직원 " +
+              sc +
+              "명이 인수 후에도 계속 근무합니다.<br/>즉시 운영 가능한 구조는 인수자 입장에서<br/>큰 메리트이므로 가격 프리미엄 요인이 됩니다.",
+          });
+        }
+        if (item.equipmentAge === "new") {
+          seller.push({
+            title: "설비·인테리어 신규",
+            desc:
+              "3년 미만 신규 설비로 추가 투자 없이 운영 가능합니다.<br/>인수 후 즉시 정상 영업이 가능하다는 점을 강조하세요.",
+          });
+        }
+        if (!buyer.length && !seller.length) return "";
+        var html = "";
+        var bi;
+        if (buyer.length) {
+          html +=
+            '<p style="font-size:0.75rem;font-weight:700;color:var(--orange);margin:0 0 0.4rem;">↓ 가격을 낮출 수 있는 포인트</p>';
+          for (bi = 0; bi < buyer.length; bi++) {
+            html +=
+              '<div style="margin-bottom:0.6rem;padding-left:0.75rem;border-left:2px solid rgba(240,78,35,0.3);">' +
+              '<p style="margin:0 0 0.15rem;font-weight:700;font-size:0.85rem;color:var(--text);">' +
+              escapeHtml(buyer[bi].title) +
+              "</p>" +
+              '<p style="margin:0;font-size:0.8rem;color:var(--muted);line-height:1.5;">' +
+              buyer[bi].desc +
+              "</p></div>";
+          }
+        }
+        if (seller.length) {
+          html +=
+            '<p style="font-size:0.75rem;font-weight:700;color:var(--navy);margin:0.75rem 0 0.4rem;">↑ 가격을 올릴 수 있는 포인트</p>';
+          for (bi = 0; bi < seller.length; bi++) {
+            html +=
+              '<div style="margin-bottom:0.6rem;padding-left:0.75rem;border-left:2px solid rgba(26,58,143,0.3);">' +
+              '<p style="margin:0 0 0.15rem;font-weight:700;font-size:0.85rem;color:var(--text);">' +
+              escapeHtml(seller[bi].title) +
+              "</p>" +
+              '<p style="margin:0;font-size:0.8rem;color:var(--muted);line-height:1.5;">' +
+              seller[bi].desc +
+              "</p></div>";
+          }
+        }
+        return html;
+      }
+
       async function openDetail(id) {
         var item = findById(id);
         if (!item) {
@@ -4307,6 +4463,20 @@
         } else {
           valWrap.innerHTML = "";
           valWrap.hidden = true;
+        }
+
+        var negWrap = $("detailNegotiationWrap");
+        var negContent = $("detailNegotiationContent");
+        if (negWrap && negContent && vdDetail) {
+          var negHtml = buildNegotiationPoints(item);
+          if (negHtml) {
+            negContent.innerHTML = negHtml;
+            negWrap.hidden = false;
+          } else {
+            negWrap.hidden = true;
+          }
+        } else if (negWrap) {
+          negWrap.hidden = true;
         }
 
         var desc = (item.description || "").trim();
