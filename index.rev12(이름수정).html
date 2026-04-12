@@ -2268,6 +2268,22 @@
             <button type="button" class="btn btn-outline" id="detailDeleteBtn">매물 삭제</button>
           </div>
         </div>
+        <div id="detailManagePinGate" hidden>
+          <button type="button" class="btn btn-ghost" id="detailManageBtn" style="font-size: 0.8rem; margin-top: 0.75rem">
+            이 매물 관리하기 (비밀번호 입력)
+          </button>
+          <div id="detailManagePinInline" hidden style="display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin-top: 0.5rem">
+            <input
+              type="password"
+              id="detailManagePinInput"
+              maxlength="4"
+              inputmode="numeric"
+              pattern="[0-9]*"
+              autocomplete="off"
+            />
+            <button type="button" class="btn btn-primary" id="detailManagePinConfirm">확인</button>
+          </div>
+        </div>
       </div>
     </section>
     </div>
@@ -3655,6 +3671,18 @@
         showView("list");
       }
 
+      function syncHomeHeaderFromScroll() {
+        var headerEl = document.querySelector(".app-header");
+        if (!headerEl) return;
+        var viewHomeEl = $("viewHome");
+        if (!viewHomeEl || !viewHomeEl.classList.contains("active")) return;
+        if (window.scrollY >= 80) {
+          headerEl.classList.remove("header--transparent");
+        } else {
+          headerEl.classList.add("header--transparent");
+        }
+      }
+
       function showView(name) {
         var views = document.querySelectorAll(".view");
         for (var i = 0; i < views.length; i++) {
@@ -3664,12 +3692,14 @@
         if (headerEl) headerEl.classList.remove("header--transparent");
         if (name === "home") {
           if ($("viewHome")) $("viewHome").classList.add("active");
-          if (headerEl) headerEl.classList.add("header--transparent");
         }
         if (name === "list") $("viewList").classList.add("active");
         if (name === "register") $("viewRegister").classList.add("active");
         if (name === "detail") $("viewDetail").classList.add("active");
         window.scrollTo(0, 0);
+        if (name === "home") {
+          syncHomeHeaderFromScroll();
+        }
       }
 
       function goToListWithHomeSearch() {
@@ -4217,8 +4247,15 @@
           wrap.hidden = true;
         }
         var delWrap = $("detailDeleteWrap");
+        var manageGate = $("detailManagePinGate");
+        var hasPin = hasLocalDeletePin(id);
         if (delWrap) {
-          delWrap.hidden = !hasLocalDeletePin(id);
+          delWrap.hidden = !hasPin;
+        }
+        if (manageGate) {
+          manageGate.hidden = hasPin;
+          if ($("detailManagePinInline")) $("detailManagePinInline").hidden = true;
+          if ($("detailManagePinInput")) $("detailManagePinInput").value = "";
         }
         $("viewDetail").dataset.currentId = id;
         updateDetailInterestRow(id);
@@ -4351,6 +4388,9 @@
           if (input) input.value = "";
         });
       }
+
+      window.addEventListener("scroll", syncHomeHeaderFromScroll, { passive: true });
+      window.addEventListener("load", syncHomeHeaderFromScroll);
 
       $("navHome").addEventListener("click", function () {
         showView("home");
@@ -4593,6 +4633,36 @@
           var id = $("viewDetail") && $("viewDetail").dataset.currentId;
           if (!id) return;
           openPhotoEditModal(id);
+        });
+      }
+
+      if ($("detailManageBtn")) {
+        $("detailManageBtn").addEventListener("click", function () {
+          if ($("detailManagePinInline")) $("detailManagePinInline").hidden = false;
+          setTimeout(function () {
+            if ($("detailManagePinInput")) $("detailManagePinInput").focus();
+          }, 0);
+        });
+      }
+      if ($("detailManagePinConfirm")) {
+        $("detailManagePinConfirm").addEventListener("click", function () {
+          var vid = $("viewDetail") && $("viewDetail").dataset.currentId;
+          if (!vid) return;
+          var pinRaw = $("detailManagePinInput") ? $("detailManagePinInput").value.trim() : "";
+          if (!/^\d{4}$/.test(pinRaw)) {
+            alert("숫자 4자리를 입력해 주세요.");
+            return;
+          }
+          try {
+            localStorage.setItem(PIN_KEY_PREFIX + vid, pinRaw);
+          } catch (eM) {}
+          var dw = $("detailDeleteWrap");
+          var mg = $("detailManagePinGate");
+          if (dw) dw.hidden = false;
+          if (mg) mg.hidden = true;
+          if ($("detailManagePinInline")) $("detailManagePinInline").hidden = true;
+          if ($("detailManagePinInput")) $("detailManagePinInput").value = "";
+          alert("PIN이 저장되었습니다. 틀린 경우 수정/삭제 시 오류가 납니다.");
         });
       }
 
@@ -5007,6 +5077,7 @@
         applyFilterCollapseFromStorage();
         renderRecentSearchTags();
         await renderList();
+        syncHomeHeaderFromScroll();
       }
 
       initApp().catch(function (err) {
