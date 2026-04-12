@@ -2373,16 +2373,98 @@
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     (function () {
-      var STORAGE_KEY = "gaegedang_listings_v1";
-      var STORAGE_KEY_LEGACY = "gaegaejangteo_listings_v1";
-      var INTEREST_COUNTS_KEY = "gaegedang_interest_counts_v1";
-      var PIN_MIGRATED_KEY = "gaegedang_pin_migrated";
-      var PHOTO_MIGRATION_KEY = "gaegedang_photo_migrated";
-      var PHOTOS_V2_MIGRATION_KEY = "gaegedang_photos_v2_migrated";
-      var VALUATION_V2_MIGRATION_KEY = "gaegedang_valuation_v2_migrated";
+      var SUPABASE_URL = "https://dckhkwgxdwlaultcggte.supabase.co";
+      var SUPABASE_ANON_KEY =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRja2hrd2d4ZHdsYXVsdGNnZ3RlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5NjUwOTEsImV4cCI6MjA5MTU0MTA5MX0.o252rUa6cZEcVc04h1PmiJmKC-L7msz8HHBluEdmzBo";
+      var sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      var listingsCache = [];
+      var interestCountsCache = {};
+      var PIN_KEY_PREFIX = "gageya_pin_";
       var MAX_LISTING_PHOTOS = 5;
+
+      function rowToListing(row) {
+        if (!row) return null;
+        var item = {
+          id: row.id,
+          storeName: row.store_name,
+          category: row.category,
+          region: row.region,
+          price: row.price,
+          description: row.description,
+          contact: row.contact,
+          monthlyRevenue: row.monthly_revenue,
+          monthlyProfit: row.monthly_profit,
+          profitInputMode: row.profit_input_mode,
+          sixMonthProfit: row.six_month_profit,
+          revenueTrend: row.revenue_trend,
+          ownerWorks: row.owner_works,
+          ownerWorkHours: row.owner_work_hours,
+          seasonality: row.seasonality,
+          leaseRenewal: row.lease_renewal,
+          deliveryRatio: row.delivery_ratio,
+          staffCount: row.staff_count,
+          staffStays: row.staff_stays,
+          equipmentAge: row.equipment_age,
+          liabilities: row.liabilities,
+          revenueVerifiable: row.revenue_verifiable,
+          keyMoneyIncluded: row.key_money_included,
+          leaseRemainingMonths: row.lease_remaining_months,
+          photos: row.photos == null ? [] : row.photos,
+          isSample: !!row.is_sample,
+          createdAt: row.created_at,
+        };
+        if (row.status != null && row.status !== "") item.status = row.status;
+        return item;
+      }
+
+      function listingToDbRow(item) {
+        return {
+          id: item.id,
+          store_name: item.storeName,
+          category: item.category,
+          region: item.region,
+          price: item.price,
+          description: item.description,
+          contact: item.contact,
+          monthly_revenue: item.monthlyRevenue,
+          monthly_profit: item.monthlyProfit,
+          profit_input_mode: item.profitInputMode,
+          six_month_profit: item.sixMonthProfit,
+          revenue_trend: item.revenueTrend,
+          owner_works: item.ownerWorks,
+          owner_work_hours: item.ownerWorkHours,
+          seasonality: item.seasonality,
+          lease_renewal: item.leaseRenewal,
+          delivery_ratio: item.deliveryRatio,
+          staff_count: item.staffCount,
+          staff_stays: item.staffStays,
+          equipment_age: item.equipmentAge,
+          liabilities: item.liabilities,
+          revenue_verifiable: item.revenueVerifiable,
+          key_money_included: item.keyMoneyIncluded,
+          lease_remaining_months: item.leaseRemainingMonths,
+          photos: item.photos && item.photos.length ? item.photos : [],
+          status: item.status != null && item.status !== "" ? item.status : null,
+          is_sample: !!item.isSample,
+          created_at: item.createdAt,
+        };
+      }
+
+      function getLocalDeletePin(listingId) {
+        try {
+          return localStorage.getItem(PIN_KEY_PREFIX + listingId);
+        } catch (e) {
+          return null;
+        }
+      }
+
+      function hasLocalDeletePin(listingId) {
+        var p = getLocalDeletePin(listingId);
+        return p != null && p !== "";
+      }
 
       var SAMPLE_PHOTOS_BY_CATEGORY = {
         식당: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&q=70",
@@ -2900,7 +2982,9 @@
               if ($("filterSearch")) $("filterSearch").value = text;
               addRecentSearchToStorage(text);
               renderRecentSearchTags();
-              renderList();
+              renderList().catch(function (err) {
+                console.error(err);
+              });
             });
             wrap.appendChild(tag);
           })(i, list[i]);
@@ -3136,46 +3220,68 @@
         }
       }
 
-      function loadListings() {
+      async function refreshInterestCountsCache() {
         try {
-          var raw = localStorage.getItem(STORAGE_KEY);
-          if (!raw && localStorage.getItem(STORAGE_KEY_LEGACY)) {
-            raw = localStorage.getItem(STORAGE_KEY_LEGACY);
-            localStorage.setItem(STORAGE_KEY, raw);
+          var res = await sb.from("interest_counts").select("listing_id, count");
+          if (res.error) throw res.error;
+          interestCountsCache = {};
+          var data = res.data;
+          if (data) {
+            for (var i = 0; i < data.length; i++) {
+              var r = data[i];
+              var n = r.count;
+              interestCountsCache[r.listing_id] =
+                typeof n === "number" && isFinite(n) && n >= 0 ? Math.floor(n) : 0;
+            }
           }
-          if (!raw) return [];
-          var parsed = JSON.parse(raw);
-          return Array.isArray(parsed) ? parsed : [];
         } catch (e) {
+          console.error(e);
+        }
+      }
+
+      async function loadListings() {
+        try {
+          var res = await sb.from("listings").select("*");
+          if (res.error) throw res.error;
+          var data = res.data;
+          var list = [];
+          if (data && data.length) {
+            for (var li = 0; li < data.length; li++) {
+              list.push(rowToListing(data[li]));
+            }
+          }
+          listingsCache = list;
+          await refreshInterestCountsCache();
+          return list;
+        } catch (e) {
+          console.error(e);
+          listingsCache = [];
           return [];
         }
       }
 
-      function loadInterestCounts() {
-        try {
-          var raw = localStorage.getItem(INTEREST_COUNTS_KEY);
-          if (!raw) return {};
-          var o = JSON.parse(raw);
-          return o && typeof o === "object" && !Array.isArray(o) ? o : {};
-        } catch (e) {
-          return {};
-        }
-      }
-
-      function saveInterestCounts(obj) {
-        localStorage.setItem(INTEREST_COUNTS_KEY, JSON.stringify(obj));
-      }
-
       function getInterestCount(listingId) {
-        var c = loadInterestCounts();
-        var n = c[listingId];
+        var n = interestCountsCache[listingId];
         return typeof n === "number" && isFinite(n) && n >= 0 ? Math.floor(n) : 0;
       }
 
-      function recordInterestSubmission(listingId) {
-        var c = loadInterestCounts();
-        c[listingId] = getInterestCount(listingId) + 1;
-        saveInterestCounts(c);
+      async function recordInterestSubmission(listingId) {
+        try {
+          var sel = await sb.from("interest_counts").select("count").eq("listing_id", listingId).maybeSingle();
+          if (sel.error) throw sel.error;
+          if (sel.data && typeof sel.data.count === "number") {
+            var next = sel.data.count + 1;
+            var up = await sb.from("interest_counts").update({ count: next }).eq("listing_id", listingId);
+            if (up.error) throw up.error;
+            interestCountsCache[listingId] = next;
+          } else {
+            var ins = await sb.from("interest_counts").insert({ listing_id: listingId, count: 1 });
+            if (ins.error) throw ins.error;
+            interestCountsCache[listingId] = 1;
+          }
+        } catch (e) {
+          console.error(e);
+        }
       }
 
       function updateDetailInterestRow(listingId) {
@@ -3253,19 +3359,18 @@
         if (interestBtn) interestBtn.hidden = st === "sold";
       }
 
-      function setListingStatus(listingId, status) {
-        var list = loadListings();
-        for (var i = 0; i < list.length; i++) {
-          if (list[i].id !== listingId) continue;
-          if (status === "available") {
-            delete list[i].status;
-          } else {
-            list[i].status = status;
-          }
-          saveListings(list);
+      async function setListingStatus(listingId, status) {
+        try {
+          var payload =
+            status === "available" ? { status: null } : { status: status };
+          var res = await sb.from("listings").update(payload).eq("id", listingId);
+          if (res.error) throw res.error;
+          await loadListings();
           return true;
+        } catch (e) {
+          console.error(e);
+          return false;
         }
-        return false;
       }
 
       function syncStatusModalRadios(listingId) {
@@ -3278,7 +3383,7 @@
 
       function openStatusModal(listingId) {
         var item = findById(listingId);
-        if (!item || item.deletePin == null || item.deletePin === "") return;
+        if (!item || !hasLocalDeletePin(listingId)) return;
         var modal = $("statusModal");
         if (!modal) return;
         modal.dataset.listingId = listingId;
@@ -3305,21 +3410,19 @@
         $("statusModalStepForm").hidden = true;
       }
 
-      function saveListings(list) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
-      }
-
-      function deleteListingById(listingId) {
-        var listings = loadListings();
-        var next = [];
-        for (var di = 0; di < listings.length; di++) {
-          if (listings[di].id !== listingId) next.push(listings[di]);
-        }
-        saveListings(next);
-        var counts = loadInterestCounts();
-        if (counts && Object.prototype.hasOwnProperty.call(counts, listingId)) {
-          delete counts[listingId];
-          saveInterestCounts(counts);
+      async function deleteListingById(listingId) {
+        try {
+          var res = await sb.from("listings").delete().eq("id", listingId);
+          if (res.error) throw res.error;
+          try {
+            localStorage.removeItem(PIN_KEY_PREFIX + listingId);
+          } catch (eRm) {}
+          delete interestCountsCache[listingId];
+          var icRes = await sb.from("interest_counts").delete().eq("listing_id", listingId);
+          if (icRes.error) console.error(icRes.error);
+          await loadListings();
+        } catch (e) {
+          console.error(e);
         }
       }
 
@@ -3327,7 +3430,7 @@
         var vid = $("viewDetail") && $("viewDetail").dataset.currentId;
         if (!vid) return;
         var dItem = findById(vid);
-        if (!dItem || dItem.deletePin == null || dItem.deletePin === "") return;
+        if (!dItem || !hasLocalDeletePin(vid)) return;
         var delModal = $("deleteModal");
         if (!delModal) return;
         delModal.dataset.listingId = vid;
@@ -3350,7 +3453,7 @@
         if ($("deletePinInput")) $("deletePinInput").value = "";
       }
 
-      function confirmDeleteListing() {
+      async function confirmDeleteListing() {
         var delModal = $("deleteModal");
         if (!delModal || delModal.hidden) return;
         var listingId = delModal.dataset.listingId;
@@ -3358,7 +3461,7 @@
         var item = findById(listingId);
         if (!item) {
           closeDeleteModal();
-          renderList();
+          await renderList();
           showView("list");
           return;
         }
@@ -3367,13 +3470,13 @@
           alert("숫자 4자리를 입력해 주세요.");
           return;
         }
-        if (String(item.deletePin) !== entered) {
+        if (String(getLocalDeletePin(listingId)) !== entered) {
           alert("비밀번호가 맞지 않습니다.");
           return;
         }
-        deleteListingById(listingId);
+        await deleteListingById(listingId);
         closeDeleteModal();
-        renderList();
+        await renderList();
         showView("list");
       }
 
@@ -3398,8 +3501,13 @@
         var hi = $("homeSearchInput");
         var q = hi && hi.value != null ? String(hi.value).trim() : "";
         if ($("filterSearch")) $("filterSearch").value = q;
-        renderList();
-        showView("list");
+        renderList()
+          .then(function () {
+            showView("list");
+          })
+          .catch(function (err) {
+            console.error(err);
+          });
       }
 
       function formatPriceDisplay(price) {
@@ -3612,20 +3720,17 @@
         });
       }
 
-      function updateListingPhotos(listingId, photosArray) {
-        var list = loadListings();
-        for (var ui = 0; ui < list.length; ui++) {
-          if (list[ui].id !== listingId) continue;
-          delete list[ui].photo;
-          if (!photosArray || !photosArray.length) {
-            delete list[ui].photos;
-          } else {
-            list[ui].photos = photosArray.slice();
-          }
-          saveListings(list);
+      async function updateListingPhotos(listingId, photosArray) {
+        try {
+          var photos = photosArray && photosArray.length ? photosArray.slice() : [];
+          var res = await sb.from("listings").update({ photos: photos }).eq("id", listingId);
+          if (res.error) throw res.error;
+          await loadListings();
           return true;
+        } catch (e) {
+          console.error(e);
+          return false;
         }
-        return false;
       }
 
       function resetPhotoEditModalStep2() {
@@ -3672,7 +3777,7 @@
 
       function openPhotoEditModal(listingId) {
         var item = findById(listingId);
-        if (!item || item.deletePin == null || item.deletePin === "") return;
+        if (!item || !hasLocalDeletePin(listingId)) return;
         var modal = $("photoEditModal");
         if (!modal) return;
         modal.dataset.listingId = listingId;
@@ -3701,52 +3806,11 @@
         resetPhotoEditModalStep2();
       }
 
-      function migratePhotoToPhotosV2Once() {
+      async function renderList() {
         try {
-          if (localStorage.getItem(PHOTOS_V2_MIGRATION_KEY)) return;
-          var list = loadListings();
-          var changed = false;
-          for (var vi = 0; vi < list.length; vi++) {
-            var row = list[vi];
-            if (!row) continue;
-            var legacy = row.photo != null && String(row.photo).trim();
-            var hasPhotos = Array.isArray(row.photos) && row.photos.length > 0;
-            if (legacy && !hasPhotos) {
-              row.photos = [String(row.photo).trim()];
-              delete row.photo;
-              changed = true;
-            }
-          }
-          if (changed) saveListings(list);
-          localStorage.setItem(PHOTOS_V2_MIGRATION_KEY, "1");
-        } catch (eV2) {}
-      }
-
-      function migrateSamplePhotosOnce() {
-        try {
-          if (localStorage.getItem(PHOTO_MIGRATION_KEY)) return;
-          var list = loadListings();
-          var changed = false;
-          for (var pi = 0; pi < list.length; pi++) {
-            var row = list[pi];
-            if (!row || row.isSample !== true) continue;
-            var hasP = Array.isArray(row.photos) && row.photos.length > 0;
-            if (hasP) continue;
-            var u = SAMPLE_PHOTOS_BY_CATEGORY[row.category] || SAMPLE_PHOTOS_BY_CATEGORY["기타"];
-            if (u) {
-              row.photos = [u];
-              delete row.photo;
-              changed = true;
-            }
-          }
-          if (changed) saveListings(list);
-          localStorage.setItem(PHOTO_MIGRATION_KEY, "1");
-        } catch (ePhoto) {}
-      }
-
-      function renderList() {
         var container = $("cardContainer");
-        var all = loadListings();
+        if (!container) return;
+        var all = listingsCache;
         var toolbar = $("listToolbar");
         if (toolbar) toolbar.hidden = false;
 
@@ -3783,7 +3847,9 @@
           container.appendChild(emptyFilter);
           $("emptyFilterReset").addEventListener("click", function () {
             resetAllFilters();
-            renderList();
+            renderList().catch(function (err) {
+              console.error(err);
+            });
           });
           return;
         }
@@ -3869,10 +3935,15 @@
             }
           }
           btn.addEventListener("click", function () {
-            openDetail(item.id);
+            openDetail(item.id).catch(function (err) {
+              console.error(err);
+            });
           });
           container.appendChild(btn);
         });
+        } catch (e) {
+          console.error(e);
+        }
       }
 
       function escapeHtml(str) {
@@ -3883,18 +3954,17 @@
       }
 
       function findById(id) {
-        var listings = loadListings();
-        for (var i = 0; i < listings.length; i++) {
-          if (listings[i].id === id) return listings[i];
+        for (var i = 0; i < listingsCache.length; i++) {
+          if (listingsCache[i].id === id) return listingsCache[i];
         }
         return null;
       }
 
-      function openDetail(id) {
+      async function openDetail(id) {
         var item = findById(id);
         if (!item) {
           showView("list");
-          renderList();
+          await renderList();
           return;
         }
         applyDetailPagePhotos(item);
@@ -3973,11 +4043,7 @@
         }
         var delWrap = $("detailDeleteWrap");
         if (delWrap) {
-          var hasPin =
-            item.deletePin != null &&
-            item.deletePin !== "" &&
-            String(item.deletePin).length > 0;
-          delWrap.hidden = !hasPin;
+          delWrap.hidden = !hasLocalDeletePin(id);
         }
         $("viewDetail").dataset.currentId = id;
         updateDetailInterestRow(id);
@@ -3992,7 +4058,7 @@
         return "id-" + Date.now() + "-" + Math.random().toString(36).slice(2, 9);
       }
 
-      $("registerForm").addEventListener("submit", function (e) {
+      $("registerForm").addEventListener("submit", async function (e) {
         e.preventDefault();
         var storeName = $("storeName").value.trim();
         var category = $("category").value;
@@ -4025,7 +4091,6 @@
           return;
         }
 
-        var listings = loadListings();
         var newItem = {
           id: uuid(),
           storeName: storeName,
@@ -4053,18 +4118,26 @@
           leaseRemainingMonths: leaseRemainingMonths,
           createdAt: Date.now(),
         };
-        if (pinRaw !== "") {
-          newItem.deletePin = pinRaw;
-        }
         if (pendingRegisterPhotos.length > 0) {
           newItem.photos = pendingRegisterPhotos.slice();
         }
-        listings.push(newItem);
-        saveListings(listings);
+        var dbRow = listingToDbRow(newItem);
+        var ins = await sb.from("listings").insert(dbRow);
+        if (ins.error) {
+          console.error(ins.error);
+          alert("등록에 실패했습니다. 잠시 후 다시 시도해 주세요.");
+          return;
+        }
+        if (pinRaw !== "") {
+          try {
+            localStorage.setItem(PIN_KEY_PREFIX + newItem.id, pinRaw);
+          } catch (ePin) {}
+        }
         $("registerForm").reset();
         clearRegisterPhotoPreview();
         updateValuationUI();
-        renderList();
+        await loadListings();
+        await renderList();
         showView("list");
       });
 
@@ -4106,8 +4179,13 @@
         showView("home");
       });
       $("navList").addEventListener("click", function () {
-        renderList();
-        showView("list");
+        renderList()
+          .then(function () {
+            showView("list");
+          })
+          .catch(function (err) {
+            console.error(err);
+          });
       });
 
       var homeSearchBtn = $("homeSearchBtn");
@@ -4130,16 +4208,26 @@
           if (!tag || !viewHomeEl.contains(tag)) return;
           var cat = tag.getAttribute("data-home-category") || "";
           setCategoryTabActive(cat);
-          renderList();
-          showView("list");
+          renderList()
+            .then(function () {
+              showView("list");
+            })
+            .catch(function (err) {
+              console.error(err);
+            });
         });
       }
 
       var homeCtaList = $("homeCtaList");
       if (homeCtaList) {
         homeCtaList.addEventListener("click", function () {
-          renderList();
-          showView("list");
+          renderList()
+            .then(function () {
+              showView("list");
+            })
+            .catch(function (err) {
+              console.error(err);
+            });
         });
       }
       var homeCtaRegister = $("homeCtaRegister");
@@ -4161,8 +4249,13 @@
       }
 
       $("detailBack").addEventListener("click", function () {
-        renderList();
-        showView("list");
+        renderList()
+          .then(function () {
+            showView("list");
+          })
+          .catch(function (err) {
+            console.error(err);
+          });
       });
 
       var filterTabsEl = $("filterCategoryTabs");
@@ -4174,14 +4267,18 @@
           if (!tab || !filterTabsEl.contains(tab)) return;
           var cat = tab.getAttribute("data-category") || "";
           setCategoryTabActive(cat);
-          renderList();
+          renderList().catch(function (err) {
+            console.error(err);
+          });
         });
       }
 
       var filterSearchEl = $("filterSearch");
       if (filterSearchEl) {
         filterSearchEl.addEventListener("input", function () {
-          renderList();
+          renderList().catch(function (err) {
+            console.error(err);
+          });
           clearTimeout(recentSearchDebounceTimer);
           recentSearchDebounceTimer = setTimeout(function () {
             var qq = filterSearchEl.value.trim();
@@ -4193,7 +4290,9 @@
           e.preventDefault();
           var qq = filterSearchEl.value.trim();
           if (qq) addRecentSearchToStorage(qq);
-          renderList();
+          renderList().catch(function (err) {
+            console.error(err);
+          });
         });
         filterSearchEl.addEventListener("focus", function () {
           clearTimeout(recentSearchBlurTimer);
@@ -4219,7 +4318,9 @@
           var tab = e.target && e.target.closest && e.target.closest(".filter-tab");
           if (!tab || !filterRegionTabsEl.contains(tab)) return;
           setRegionTabActive(tab.getAttribute("data-region") || "");
-          renderList();
+          renderList().catch(function (err) {
+            console.error(err);
+          });
         });
       }
 
@@ -4231,7 +4332,9 @@
           var mn = tab.getAttribute("data-min") || "";
           var mx = tab.getAttribute("data-max") || "";
           setPriceRangeTabActiveFromMinMax(mn, mx);
-          renderList();
+          renderList().catch(function (err) {
+            console.error(err);
+          });
         });
       }
 
@@ -4241,15 +4344,22 @@
           var tab = e.target && e.target.closest && e.target.closest(".filter-tab");
           if (!tab || !filterLeaseTabsEl.contains(tab)) return;
           setLeaseTabActive(tab.getAttribute("data-lease") || "");
-          renderList();
+          renderList().catch(function (err) {
+            console.error(err);
+          });
         });
       }
 
-      if ($("filterUseValuation")) $("filterUseValuation").addEventListener("change", renderList);
-      if ($("filterOnlyAvailable")) $("filterOnlyAvailable").addEventListener("change", renderList);
-      if ($("filterUndervalued")) $("filterUndervalued").addEventListener("change", renderList);
-      if ($("filterHasPhotos")) $("filterHasPhotos").addEventListener("change", renderList);
-      if ($("filterSort")) $("filterSort").addEventListener("change", renderList);
+      function renderListOnChange() {
+        renderList().catch(function (err) {
+          console.error(err);
+        });
+      }
+      if ($("filterUseValuation")) $("filterUseValuation").addEventListener("change", renderListOnChange);
+      if ($("filterOnlyAvailable")) $("filterOnlyAvailable").addEventListener("change", renderListOnChange);
+      if ($("filterUndervalued")) $("filterUndervalued").addEventListener("change", renderListOnChange);
+      if ($("filterHasPhotos")) $("filterHasPhotos").addEventListener("change", renderListOnChange);
+      if ($("filterSort")) $("filterSort").addEventListener("change", renderListOnChange);
 
       var filterCollapseToggleEl = $("filterCollapseToggle");
       if (filterCollapseToggleEl && $("listToolbarFilters")) {
@@ -4269,7 +4379,9 @@
       if ($("filterReset")) {
         $("filterReset").addEventListener("click", function () {
           resetAllFilters();
-          renderList();
+          renderList().catch(function (err) {
+            console.error(err);
+          });
         });
       }
 
@@ -4321,7 +4433,7 @@
             alert("숫자 4자리를 입력해 주세요.");
             return;
           }
-          if (String(item.deletePin) !== entered) {
+          if (String(getLocalDeletePin(listingId)) !== entered) {
             alert("비밀번호가 맞지 않습니다.");
             return;
           }
@@ -4331,7 +4443,7 @@
         });
       }
       if ($("statusSaveBtn")) {
-        $("statusSaveBtn").addEventListener("click", function () {
+        $("statusSaveBtn").addEventListener("click", async function () {
           var modal = $("statusModal");
           if (!modal || modal.hidden) return;
           var listingId = modal.dataset.listingId;
@@ -4343,9 +4455,10 @@
           }
           var val = picked.value;
           if (val !== "available" && val !== "negotiating" && val !== "sold") return;
-          setListingStatus(listingId, val);
+          var ok = await setListingStatus(listingId, val);
+          if (!ok) return;
           closeStatusModal();
-          renderList();
+          await renderList();
           if ($("viewDetail") && $("viewDetail").dataset.currentId === listingId) {
             var fresh = findById(listingId);
             if (fresh) {
@@ -4372,7 +4485,7 @@
             alert("숫자 4자리를 입력해 주세요.");
             return;
           }
-          if (String(item.deletePin) !== entered) {
+          if (String(getLocalDeletePin(listingId)) !== entered) {
             alert("비밀번호가 맞지 않습니다.");
             return;
           }
@@ -4383,14 +4496,14 @@
         });
       }
       if ($("photoEditSaveBtn")) {
-        $("photoEditSaveBtn").addEventListener("click", function () {
+        $("photoEditSaveBtn").addEventListener("click", async function () {
           var modal = $("photoEditModal");
           if (!modal || modal.hidden) return;
           var listingId = modal.dataset.listingId;
           if (!listingId) return;
-          updateListingPhotos(listingId, photoEditDraftPhotos.slice());
+          await updateListingPhotos(listingId, photoEditDraftPhotos.slice());
           closePhotoEditModal();
-          renderList();
+          await renderList();
           if ($("viewDetail") && $("viewDetail").dataset.currentId === listingId) {
             var fresh = findById(listingId);
             if (fresh) applyDetailPagePhotos(fresh);
@@ -4398,14 +4511,14 @@
         });
       }
       if ($("photoEditDeleteBtn")) {
-        $("photoEditDeleteBtn").addEventListener("click", function () {
+        $("photoEditDeleteBtn").addEventListener("click", async function () {
           var modal = $("photoEditModal");
           if (!modal || modal.hidden) return;
           var listingId = modal.dataset.listingId;
           if (!listingId) return;
-          updateListingPhotos(listingId, []);
+          await updateListingPhotos(listingId, []);
           closePhotoEditModal();
-          renderList();
+          await renderList();
           if ($("viewDetail") && $("viewDetail").dataset.currentId === listingId) {
             var fresh = findById(listingId);
             if (fresh) applyDetailPagePhotos(fresh);
@@ -4479,7 +4592,7 @@
       }
 
       if ($("interestSubmitBtn")) {
-        $("interestSubmitBtn").addEventListener("click", function () {
+        $("interestSubmitBtn").addEventListener("click", async function () {
           var modal = $("interestModal");
           if (!modal || modal.hidden) return;
           var listingId = modal.dataset.listingId;
@@ -4498,7 +4611,7 @@
             alert("연락처(이메일 또는 카카오 ID)를 입력해 주세요.");
             return;
           }
-          recordInterestSubmission(listingId);
+          await recordInterestSubmission(listingId);
           $("interestModalStepForm").hidden = true;
           $("interestModalStepSuccess").hidden = false;
           updateDetailInterestRow(listingId);
@@ -4527,8 +4640,6 @@
         if (!modal || modal.hidden) return;
         closeInterestModal();
       });
-
-      var SAMPLE_LOADED_KEY = "gaegedang_sample_loaded";
 
       function sampleRandomCreatedAt() {
         return Date.now() - Math.floor(Math.random() * (14 * 24 * 60 * 60 * 1000));
@@ -4592,81 +4703,40 @@
         return out;
       }
 
-      function injectSampleListingsOnce() {
+      async function injectSampleListingsOnce() {
         try {
-          if (localStorage.getItem(SAMPLE_LOADED_KEY)) return;
-          saveListings(loadListings().concat(buildSampleListings()));
-          localStorage.setItem(SAMPLE_LOADED_KEY, "1");
-        } catch (err) {}
-      }
-
-      function migrateDeletePinsOnce() {
-        try {
-          if (localStorage.getItem(PIN_MIGRATED_KEY)) return;
-          var list = loadListings();
-          var changed = false;
-          for (var mi = 0; mi < list.length; mi++) {
-            var row = list[mi];
-            if (row && !Object.prototype.hasOwnProperty.call(row, "deletePin")) {
-              row.deletePin = "1234";
-              changed = true;
-            }
+          var cntRes = await sb
+            .from("listings")
+            .select("*", { count: "exact", head: true })
+            .eq("is_sample", true);
+          if (cntRes.error) throw cntRes.error;
+          var n = typeof cntRes.count === "number" ? cntRes.count : 0;
+          if (n > 0) return;
+          var samples = buildSampleListings();
+          var rows = [];
+          for (var si = 0; si < samples.length; si++) {
+            rows.push(listingToDbRow(samples[si]));
           }
-          if (changed) saveListings(list);
-          localStorage.setItem(PIN_MIGRATED_KEY, "1");
-        } catch (errM) {}
+          var ins = await sb.from("listings").insert(rows);
+          if (ins.error) throw ins.error;
+        } catch (err) {
+          console.error(err);
+        }
       }
 
-      function defaultValuationFieldsForCategory(cat) {
-        var cv = cat === "편의점";
-        return {
-          profitInputMode: "monthly",
-          sixMonthProfit: null,
-          revenueTrend: "stable",
-          ownerWorks: !cv,
-          ownerWorkHours: cv ? null : 10,
-          seasonality: cat === "식당" ? "some" : "none",
-          leaseRenewal: "unknown",
-          deliveryRatio: cat === "식당" ? "mid" : "none",
-          staffCount: cv ? 3 : 2,
-          staffStays: "yes",
-          equipmentAge: "mid",
-          liabilities: 0,
-          revenueVerifiable: true,
-        };
+      async function initApp() {
+        var cc = $("cardContainer");
+        if (cc) cc.textContent = "매물을 불러오는 중...";
+        await injectSampleListingsOnce();
+        await loadListings();
+        applyFilterCollapseFromStorage();
+        renderRecentSearchTags();
+        await renderList();
       }
 
-      function migrateValuationV2Once() {
-        try {
-          if (localStorage.getItem(VALUATION_V2_MIGRATION_KEY)) return;
-          var list = loadListings();
-          var changed = false;
-          for (var vi = 0; vi < list.length; vi++) {
-            var row = list[vi];
-            if (!row || !row.isSample || row.revenueTrend != null) continue;
-            var defs = defaultValuationFieldsForCategory(row.category || "기타");
-            for (var dk in defs) {
-              if (!Object.prototype.hasOwnProperty.call(row, dk)) {
-                row[dk] = defs[dk];
-                changed = true;
-              }
-            }
-          }
-          if (changed) saveListings(list);
-          localStorage.setItem(VALUATION_V2_MIGRATION_KEY, "1");
-        } catch (errV) {}
-      }
-
-      injectSampleListingsOnce();
-      migrateDeletePinsOnce();
-      migratePhotoToPhotosV2Once();
-      migrateSamplePhotosOnce();
-      migrateValuationV2Once();
-
-      applyFilterCollapseFromStorage();
-      renderRecentSearchTags();
-
-      renderList();
+      initApp().catch(function (err) {
+        console.error(err);
+      });
     })();
 
   </script>
