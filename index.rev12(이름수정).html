@@ -2215,6 +2215,7 @@
         </div>
         <div class="detail-delete-wrap" id="detailDeleteWrap" hidden>
           <div class="detail-owner-actions">
+            <button type="button" class="btn btn-outline" id="detailEditBtn">매물 수정</button>
             <button type="button" class="btn btn-outline" id="detailStatusBtn">상태 변경</button>
             <button type="button" class="btn btn-outline" id="detailPhotoEditBtn">사진 변경</button>
             <button type="button" class="btn btn-outline" id="detailDeleteBtn">매물 삭제</button>
@@ -2334,6 +2335,76 @@
           <div class="modal-footer-btns">
             <button type="button" class="btn btn-primary" id="statusSaveBtn">저장하기</button>
             <button type="button" class="btn btn-secondary" id="statusFormCancelBtn">취소</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="editModal" class="modal" hidden aria-hidden="true">
+    <button type="button" class="modal-backdrop" id="editModalBackdrop" aria-label="닫기" tabindex="-1"></button>
+    <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="editModalTitlePin">
+      <div class="modal-body">
+        <div id="editModalStepPin">
+          <h2 class="modal-title" id="editModalTitlePin">매물 수정</h2>
+          <p class="modal-delete-lead">비밀번호를 입력한 뒤 수정할 수 있습니다.</p>
+          <div class="field">
+            <label for="editPinInput">삭제 비밀번호 (숫자 4자리)</label>
+            <input
+              type="password"
+              id="editPinInput"
+              maxlength="4"
+              inputmode="numeric"
+              pattern="[0-9]*"
+              autocomplete="off"
+            />
+          </div>
+          <div class="modal-footer-btns">
+            <button type="button" class="btn btn-primary" id="editPinNextBtn">다음</button>
+            <button type="button" class="btn btn-secondary" id="editModalCancelBtn">취소</button>
+          </div>
+        </div>
+        <div id="editModalStepForm" hidden>
+          <h2 class="modal-title" id="editModalTitleForm">매물 수정</h2>
+          <div class="field">
+            <label for="editStoreName">가게 이름 <span aria-hidden="true">*</span></label>
+            <input type="text" id="editStoreName" maxlength="80" />
+          </div>
+          <div class="field">
+            <label for="editCategory">업종 <span aria-hidden="true">*</span></label>
+            <select id="editCategory">
+              <option value="">선택하세요</option>
+              <option value="식당">식당</option>
+              <option value="카페">카페</option>
+              <option value="미용실">미용실</option>
+              <option value="편의점">편의점</option>
+              <option value="마트·잡화">마트·잡화</option>
+              <option value="기타">기타</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="editRegion">지역 <span aria-hidden="true">*</span></label>
+            <input type="text" id="editRegion" maxlength="60" />
+          </div>
+          <div class="field">
+            <label for="editPrice">희망 가격 <span aria-hidden="true">*</span></label>
+            <input type="text" id="editPrice" maxlength="40" />
+          </div>
+          <div class="field">
+            <label for="editDescription">상세 설명</label>
+            <textarea id="editDescription" maxlength="2000" rows="5"></textarea>
+          </div>
+          <div class="field">
+            <label for="editContact">연락처</label>
+            <input type="text" id="editContact" maxlength="80" />
+          </div>
+          <div class="field">
+            <label for="editSellerEmail">알림 받을 이메일 주소 (선택)</label>
+            <input type="email" id="editSellerEmail" maxlength="120" />
+          </div>
+          <div class="modal-footer-btns">
+            <button type="button" class="btn btn-primary" id="editSaveBtn">저장하기</button>
+            <button type="button" class="btn btn-secondary" id="editFormCancelBtn">취소</button>
           </div>
         </div>
       </div>
@@ -3425,6 +3496,48 @@
         $("statusModalStepForm").hidden = true;
       }
 
+      function syncEditModalForm(listingId) {
+        var item = findById(listingId);
+        if (!item) return;
+        if ($("editStoreName")) $("editStoreName").value = item.storeName || "";
+        if ($("editCategory")) $("editCategory").value = item.category || "";
+        if ($("editRegion")) $("editRegion").value = item.region || "";
+        if ($("editPrice")) $("editPrice").value = item.price || "";
+        if ($("editDescription")) $("editDescription").value = item.description || "";
+        if ($("editContact")) $("editContact").value = item.contact || "";
+        if ($("editSellerEmail")) $("editSellerEmail").value = item.sellerEmail || "";
+      }
+
+      function openEditModal(listingId) {
+        if (!hasLocalDeletePin(listingId)) return;
+        var item = findById(listingId);
+        if (!item) return;
+        var modal = $("editModal");
+        if (!modal) return;
+        modal.dataset.listingId = listingId;
+        if ($("editPinInput")) $("editPinInput").value = "";
+        $("editModalStepPin").hidden = false;
+        $("editModalStepForm").hidden = true;
+        modal.hidden = false;
+        modal.setAttribute("aria-hidden", "false");
+        document.body.style.overflow = "hidden";
+        setTimeout(function () {
+          if ($("editPinInput")) $("editPinInput").focus();
+        }, 0);
+      }
+
+      function closeEditModal() {
+        var modal = $("editModal");
+        if (!modal) return;
+        modal.hidden = true;
+        modal.setAttribute("aria-hidden", "true");
+        document.body.style.overflow = "";
+        delete modal.dataset.listingId;
+        if ($("editPinInput")) $("editPinInput").value = "";
+        $("editModalStepPin").hidden = false;
+        $("editModalStepForm").hidden = true;
+      }
+
       async function deleteListingById(listingId) {
         try {
           var res = await sb.from("listings").delete().eq("id", listingId);
@@ -4412,6 +4525,14 @@
         });
       }
 
+      if ($("detailEditBtn")) {
+        $("detailEditBtn").addEventListener("click", function () {
+          var id = $("viewDetail") && $("viewDetail").dataset.currentId;
+          if (!id) return;
+          openEditModal(id);
+        });
+      }
+
       if ($("detailStatusBtn")) {
         $("detailStatusBtn").addEventListener("click", function () {
           var id = $("viewDetail") && $("viewDetail").dataset.currentId;
@@ -4488,6 +4609,77 @@
       if ($("statusModalCancelBtn")) $("statusModalCancelBtn").addEventListener("click", closeStatusModal);
       if ($("statusFormCancelBtn")) $("statusFormCancelBtn").addEventListener("click", closeStatusModal);
       if ($("statusModalBackdrop")) $("statusModalBackdrop").addEventListener("click", closeStatusModal);
+
+      if ($("editPinNextBtn")) {
+        $("editPinNextBtn").addEventListener("click", function () {
+          var modal = $("editModal");
+          if (!modal || modal.hidden) return;
+          var listingId = modal.dataset.listingId;
+          if (!listingId) return;
+          var item = findById(listingId);
+          if (!item) return;
+          var entered = $("editPinInput") ? $("editPinInput").value.trim() : "";
+          if (!/^\d{4}$/.test(entered)) {
+            alert("숫자 4자리를 입력해 주세요.");
+            return;
+          }
+          if (String(getLocalDeletePin(listingId)) !== entered) {
+            alert("비밀번호가 맞지 않습니다.");
+            return;
+          }
+          syncEditModalForm(listingId);
+          $("editModalStepPin").hidden = true;
+          $("editModalStepForm").hidden = false;
+          setTimeout(function () {
+            if ($("editStoreName")) $("editStoreName").focus();
+          }, 0);
+        });
+      }
+      if ($("editSaveBtn")) {
+        $("editSaveBtn").addEventListener("click", async function () {
+          var modal = $("editModal");
+          if (!modal || modal.hidden) return;
+          var listingId = modal.dataset.listingId;
+          if (!listingId) return;
+          var storeName = $("editStoreName") ? $("editStoreName").value.trim() : "";
+          var category = $("editCategory") ? $("editCategory").value : "";
+          var region = $("editRegion") ? $("editRegion").value.trim() : "";
+          var price = $("editPrice") ? $("editPrice").value.trim() : "";
+          var description = $("editDescription") ? $("editDescription").value.trim() : "";
+          var contact = $("editContact") ? $("editContact").value.trim() : "";
+          var sellerEmail = $("editSellerEmail") ? $("editSellerEmail").value.trim() : "";
+          if (!storeName || !category || !region || !price) {
+            alert("가게 이름, 업종, 지역, 희망 가격은 필수입니다.");
+            return;
+          }
+          var res = await sb
+            .from("listings")
+            .update({
+              store_name: storeName,
+              category: category,
+              region: region,
+              price: price,
+              description: description,
+              contact: contact,
+              seller_email: sellerEmail || null,
+            })
+            .eq("id", listingId);
+          if (res.error) {
+            console.error(res.error);
+            alert("수정에 실패했습니다. 잠시 후 다시 시도해 주세요.");
+            return;
+          }
+          closeEditModal();
+          await loadListings();
+          await renderList();
+          openDetail(listingId).catch(function (err) {
+            console.error(err);
+          });
+        });
+      }
+      if ($("editModalCancelBtn")) $("editModalCancelBtn").addEventListener("click", closeEditModal);
+      if ($("editFormCancelBtn")) $("editFormCancelBtn").addEventListener("click", closeEditModal);
+      if ($("editModalBackdrop")) $("editModalBackdrop").addEventListener("click", closeEditModal);
 
       if ($("photoEditPinNextBtn")) {
         $("photoEditPinNextBtn").addEventListener("click", function () {
@@ -4660,6 +4852,11 @@
         var delModal = $("deleteModal");
         if (delModal && !delModal.hidden) {
           closeDeleteModal();
+          return;
+        }
+        var editModalEl = $("editModal");
+        if (editModalEl && !editModalEl.hidden) {
+          closeEditModal();
           return;
         }
         var stModal = $("statusModal");
