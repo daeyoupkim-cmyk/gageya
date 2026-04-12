@@ -1,0 +1,4674 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>가게야 — 자영업 매물 플랫폼</title>
+  <style>
+    :root {
+      --orange: #f04e23;
+      --orange-hover: #d9441c;
+      --orange-tint: #fff3ee;
+      --navy: #1a3a8f;
+      --navy-hover: #152f75;
+      --navy-tint: #eef2ff;
+      --bg: #f7f8fa;
+      --surface: #ffffff;
+      --text: #1a1d21;
+      --muted: #5c6370;
+      --border: #e4e7ec;
+      --accent: var(--orange);
+      --accent-hover: var(--orange-hover);
+      --radius: 8px;
+      --shadow-sm: 0 1px 3px rgba(26, 29, 33, 0.05);
+      --shadow-md: 0 4px 24px rgba(26, 58, 143, 0.07);
+      --shadow-card: 0 2px 16px rgba(26, 29, 33, 0.06);
+      --shadow-card-hover: 0 10px 28px rgba(26, 29, 33, 0.1);
+      --shadow-modal: 0 12px 48px rgba(26, 29, 33, 0.12);
+      --focus-ring: 0 0 0 3px rgba(240, 78, 35, 0.2);
+      --font: "Pretendard", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      min-height: 100dvh;
+    }
+
+    a {
+      color: var(--navy);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+      color: var(--orange);
+    }
+
+    .app-header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--navy);
+      border-bottom: none;
+      padding: 0.8rem 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      box-shadow: var(--shadow-sm);
+      transition: background 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .app-header.header--transparent {
+      background: transparent;
+      box-shadow: none;
+    }
+
+    .logo {
+      font-weight: 800;
+      font-size: 1.2rem;
+      color: #fff;
+      cursor: pointer;
+      border: none;
+      background: none;
+      padding: 0;
+      font-family: inherit;
+      letter-spacing: -0.02em;
+    }
+
+    .logo:hover {
+      color: rgba(255, 255, 255, 0.88);
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .app-header .btn-ghost {
+      background: transparent;
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.85);
+    }
+
+    .app-header .btn-ghost:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff;
+      border-color: #fff;
+    }
+
+    .app-header .btn-primary {
+      background: var(--orange);
+      color: #fff;
+    }
+
+    .app-header .btn-primary:hover {
+      background: var(--orange-hover);
+      color: #fff;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.55rem 1rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      border-radius: var(--radius);
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, transform 0.15s ease;
+    }
+
+    .btn-primary {
+      background: var(--orange);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: var(--orange-hover);
+    }
+
+    .btn-secondary {
+      background: var(--navy);
+      color: #fff;
+    }
+
+    .btn-secondary:hover {
+      background: var(--navy-hover);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+
+    .btn-ghost:hover {
+      border-color: var(--navy);
+      color: var(--navy);
+      background: var(--navy-tint);
+    }
+
+    main {
+      max-width: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .view-page-shell {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 1.25rem 1rem 2.5rem;
+    }
+
+    .view {
+      display: none;
+    }
+
+    .view.active {
+      display: block;
+      animation: fadeIn 0.22s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .page-title {
+      font-size: 1.35rem;
+      font-weight: 800;
+      margin: 0 0 0.35rem;
+      color: var(--text);
+      letter-spacing: -0.02em;
+    }
+
+    .page-desc {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin: 0 0 1.25rem;
+    }
+
+    .list-toolbar {
+      background: var(--surface);
+      border: none;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-card);
+      padding: 1.1rem;
+      margin-bottom: 1rem;
+    }
+
+    .list-toolbar-top {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.65rem;
+      margin-bottom: 0.85rem;
+    }
+
+    .list-toolbar-top-main {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.5rem 0.75rem;
+    }
+
+    .filter-active-badge {
+      display: inline-block;
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 0.2rem 0.5rem;
+      border-radius: var(--radius);
+      background: rgba(234, 88, 12, 0.14);
+      color: var(--orange);
+      border: 1px solid rgba(234, 88, 12, 0.4);
+      line-height: 1.3;
+    }
+
+    .filter-collapse-btn {
+      font-size: 0.78rem;
+      padding: 0.35rem 0.65rem;
+    }
+
+    .list-toolbar-filters.is-collapsed {
+      display: none;
+    }
+
+    .list-toolbar-search-block {
+      margin-bottom: 0.85rem;
+    }
+
+    .recent-search-wrap {
+      margin-top: 0.45rem;
+    }
+
+    .recent-search-inner {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.35rem 0.5rem;
+    }
+
+    .recent-search-label {
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .recent-search-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    .recent-search-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.22rem 0.4rem 0.22rem 0.5rem;
+      font-size: 0.72rem;
+      font-weight: 600;
+      font-family: inherit;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--navy);
+      cursor: pointer;
+      transition: background 0.15s ease, border-color 0.15s ease;
+      max-width: 100%;
+    }
+
+    .recent-search-tag:hover {
+      border-color: var(--navy);
+      background: var(--navy-tint);
+    }
+
+    .recent-search-tag-remove {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1rem;
+      height: 1rem;
+      padding: 0;
+      margin: 0;
+      border: none;
+      border-radius: 2px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 0.85rem;
+      line-height: 1;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .recent-search-tag-remove:hover {
+      color: var(--orange);
+      background: rgba(234, 88, 12, 0.12);
+    }
+
+    .recent-search-clear-all {
+      font-size: 0.68rem !important;
+      padding: 0.2rem 0.45rem !important;
+      flex: 0 0 auto;
+    }
+
+    .listing-card-new-badge {
+      background: rgba(22, 101, 52, 0.12);
+      color: #166534;
+      border: 1px solid rgba(22, 101, 52, 0.35);
+    }
+
+    .listing-count {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .listing-count span {
+      color: var(--orange);
+    }
+
+    .filter-search {
+      width: 100%;
+      padding: 0.65rem 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 1rem;
+      font-family: inherit;
+      margin-bottom: 0.85rem;
+      background: var(--surface);
+    }
+
+    .filter-search:focus {
+      outline: none;
+      border-color: var(--navy);
+      box-shadow: var(--focus-ring);
+    }
+
+    .filter-label {
+      display: block;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.4rem;
+    }
+
+    .filter-tabs-wrap {
+      margin-bottom: 0.85rem;
+      overflow: hidden;
+    }
+
+    .filter-tabs {
+      display: flex;
+      flex-wrap: nowrap;
+      gap: 0.4rem;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 2px;
+      scrollbar-width: thin;
+    }
+
+    .filter-tab {
+      flex: 0 0 auto;
+      padding: 0.45rem 0.8rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      font-family: inherit;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--muted);
+      cursor: pointer;
+      transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+      white-space: nowrap;
+    }
+
+    .filter-tab:hover {
+      border-color: var(--navy);
+      color: var(--navy);
+    }
+
+    .filter-tab.is-active {
+      background: var(--navy);
+      border-color: var(--navy);
+      color: #fff;
+    }
+
+    .filter-price-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      gap: 0.5rem;
+      margin-bottom: 0.65rem;
+    }
+
+    .filter-price-field {
+      flex: 1 1 120px;
+      min-width: 0;
+    }
+
+    .filter-price-field input {
+      width: 100%;
+      padding: 0.55rem 0.65rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.95rem;
+      font-family: inherit;
+      background: var(--surface);
+    }
+
+    .filter-price-field input:focus {
+      outline: none;
+      border-color: var(--navy);
+      box-shadow: var(--focus-ring);
+    }
+
+    .filter-price-sep {
+      color: var(--muted);
+      font-size: 0.85rem;
+      padding-bottom: 0.5rem;
+      flex: 0 0 auto;
+    }
+
+    .filter-toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.85rem;
+      flex-wrap: wrap;
+    }
+
+    .filter-toggle-row input[type="checkbox"] {
+      width: 1.1rem;
+      height: 1.1rem;
+      accent-color: var(--navy);
+    }
+
+    .filter-toggle-row label {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--text);
+      cursor: pointer;
+      margin: 0;
+    }
+
+    .filter-toggle-hint {
+      width: 100%;
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin: -0.35rem 0 0 1.6rem;
+      line-height: 1.45;
+    }
+
+    .filter-sort-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.65rem;
+    }
+
+    .filter-sort-row select {
+      flex: 1 1 180px;
+      min-width: 0;
+      padding: 0.55rem 0.65rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.9rem;
+      font-family: inherit;
+      background: var(--surface);
+      cursor: pointer;
+      color: var(--text);
+    }
+
+    .filter-sort-row select:focus {
+      outline: none;
+      border-color: var(--navy);
+      box-shadow: var(--focus-ring);
+    }
+
+    .filter-actions {
+      display: flex;
+      justify-content: flex-end;
+      border-top: 1px solid var(--border);
+      margin-top: 0.35rem;
+      padding-top: 0.65rem;
+    }
+
+    .btn-outline {
+      background: var(--surface);
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+
+    .btn-outline:hover {
+      border-color: var(--navy);
+      color: var(--navy);
+      background: var(--navy-tint);
+    }
+
+    .card-grid {
+      display: grid;
+      gap: 0.85rem;
+    }
+
+    .listing-card {
+      position: relative;
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 1rem 1rem 1rem calc(1rem - 3px);
+      border: none;
+      border-left: 3px solid transparent;
+      box-shadow: var(--shadow-card);
+      cursor: pointer;
+      text-align: left;
+      width: 100%;
+      font-family: inherit;
+      transition: box-shadow 0.2s ease, transform 0.2s ease, border-left-color 0.2s ease, opacity 0.2s ease;
+    }
+
+    .listing-card--sold {
+      opacity: 0.5;
+    }
+
+    .listing-card--has-status {
+      padding-right: 4.25rem;
+    }
+
+    .card-status-corner {
+      position: absolute;
+      top: 0.65rem;
+      right: 0.65rem;
+      z-index: 1;
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 0.2rem 0.45rem;
+      border-radius: var(--radius);
+      line-height: 1.2;
+      pointer-events: none;
+    }
+
+    .listing-status-badge--negotiating {
+      background: #fff3cd;
+      color: #856404;
+      border: 1px solid #ffe69c;
+    }
+
+    .listing-status-badge--sold {
+      background: #e9ecef;
+      color: #6c757d;
+      border: 1px solid #dee2e6;
+    }
+
+    .listing-card:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-card-hover);
+      border-left-color: var(--orange);
+    }
+
+    .listing-card:focus-visible {
+      outline: none;
+      box-shadow: var(--shadow-card-hover), var(--focus-ring);
+      border-left-color: var(--orange);
+    }
+
+    .card-name {
+      font-weight: 700;
+      font-size: 1.05rem;
+      margin: 0 0 0.4rem;
+      color: var(--text);
+    }
+
+    .card-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem 0.5rem;
+      font-size: 0.8rem;
+      margin-bottom: 0.55rem;
+    }
+
+    .card-meta span:first-of-type {
+      display: inline-block;
+      padding: 0.2rem 0.55rem;
+      border-radius: var(--radius);
+      background: var(--orange-tint);
+      color: var(--orange);
+      font-weight: 600;
+    }
+
+    .card-meta span:last-of-type {
+      display: inline-block;
+      padding: 0.2rem 0.55rem;
+      border-radius: var(--radius);
+      background: var(--navy-tint);
+      color: var(--navy);
+      font-weight: 600;
+    }
+
+    .card-price {
+      font-weight: 800;
+      font-size: 1rem;
+      color: var(--orange);
+    }
+
+    .card-interest-count {
+      margin: 0.45rem 0 0;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--navy);
+    }
+
+    .listing-card--has-photo {
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .listing-card--has-photo.listing-card--has-status .listing-card--body {
+      padding-right: 4.25rem;
+    }
+
+    .card-photo-wrap {
+      width: 100%;
+      height: 140px;
+      overflow: hidden;
+      background: var(--navy-tint);
+    }
+
+    .card-photo-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .listing-card--body {
+      padding: 0.85rem 1rem 1rem calc(1rem - 3px);
+    }
+
+    .detail-photo-wrap {
+      margin: -1.25rem -1.25rem 1rem -1.25rem;
+      overflow: hidden;
+      border-radius: var(--radius) var(--radius) 0 0;
+    }
+
+    .listing-photo-preview-wrap {
+      margin-top: 0.5rem;
+    }
+
+    .listing-photo-preview-wrap img {
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      display: block;
+    }
+
+    .listing-photo-preview-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+
+    .listing-photo-thumb {
+      position: relative;
+      width: 100px;
+      height: 100px;
+      flex-shrink: 0;
+    }
+
+    .listing-photo-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      display: block;
+    }
+
+    .listing-photo-thumb-remove {
+      position: absolute;
+      top: -0.35rem;
+      right: -0.35rem;
+      width: 1.35rem;
+      height: 1.35rem;
+      border-radius: 50%;
+      border: none;
+      background: var(--text);
+      color: #fff;
+      font-size: 0.8rem;
+      line-height: 1;
+      cursor: pointer;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: inherit;
+    }
+
+    .listing-photo-thumb-remove:hover {
+      opacity: 0.9;
+    }
+
+    .detail-photo-single img {
+      width: 100%;
+      height: 220px;
+      object-fit: cover;
+      display: block;
+      border-radius: var(--radius);
+    }
+
+    .detail-photo-slider {
+      width: 100%;
+    }
+
+    .detail-photo-slider-inner {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .detail-photo-viewport {
+      flex: 1;
+      overflow: hidden;
+      height: 220px;
+      border-radius: var(--radius);
+      min-width: 0;
+    }
+
+    .detail-photo-track {
+      display: flex;
+      height: 100%;
+      transition: transform 0.28s ease;
+    }
+
+    .detail-photo-slide {
+      flex-shrink: 0;
+      height: 100%;
+    }
+
+    .detail-photo-slide img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      border-radius: var(--radius);
+    }
+
+    .detail-photo-nav {
+      flex-shrink: 0;
+      width: 2.15rem;
+      height: 2.15rem;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 1rem;
+      color: var(--navy);
+      padding: 0;
+      font-family: inherit;
+      line-height: 1;
+    }
+
+    .detail-photo-nav:hover {
+      border-color: var(--navy);
+      background: var(--navy-tint);
+    }
+
+    .detail-photo-dots {
+      display: flex;
+      justify-content: center;
+      gap: 0.4rem;
+      margin-top: 0.55rem;
+      flex-wrap: wrap;
+    }
+
+    .detail-photo-dot {
+      width: 0.45rem;
+      height: 0.45rem;
+      border-radius: 50%;
+      border: none;
+      padding: 0;
+      background: var(--border);
+      cursor: pointer;
+    }
+
+    .detail-photo-dot.is-active {
+      background: var(--navy);
+      transform: scale(1.2);
+    }
+
+    .photo-edit-draft-row:empty {
+      display: none;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 2.5rem 1rem;
+      background: var(--surface);
+      border-radius: var(--radius);
+      border: 1px dashed var(--border);
+      color: var(--muted);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .empty-state p {
+      margin: 0 0 1rem;
+    }
+
+    form.register-form {
+      background: var(--surface);
+      padding: 1.25rem;
+      border-radius: var(--radius);
+      border: none;
+      box-shadow: var(--shadow-card);
+    }
+
+    .field {
+      margin-bottom: 1rem;
+    }
+
+    .field label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 0.35rem;
+      color: var(--text);
+    }
+
+    .field input,
+    .field textarea,
+    .field select {
+      width: 100%;
+      padding: 0.65rem 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 1rem;
+      font-family: inherit;
+      background: var(--surface);
+    }
+
+    .field input:focus,
+    .field textarea:focus,
+    .field select:focus {
+      outline: none;
+      border-color: var(--navy);
+      box-shadow: var(--focus-ring);
+    }
+
+    .field textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    .field-hint {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 0.25rem;
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-top: 1.25rem;
+    }
+
+    .detail-hero {
+      background: var(--surface);
+      border-radius: var(--radius);
+      border: none;
+      box-shadow: var(--shadow-card);
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+    }
+
+    .detail-name {
+      font-size: 1.4rem;
+      font-weight: 800;
+      margin: 0 0 0.5rem;
+      letter-spacing: -0.02em;
+    }
+
+    .detail-status-row {
+      margin: 0 0 0.5rem;
+    }
+
+    .detail-status-row .listing-status-badge {
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 0.25rem 0.55rem;
+      border-radius: var(--radius);
+    }
+
+    .detail-status-notice {
+      margin: 0 0 0.75rem;
+      font-size: 0.85rem;
+      line-height: 1.5;
+      color: #856404;
+      padding: 0.65rem 0.75rem;
+      background: #fff9e6;
+      border-radius: var(--radius);
+      border: 1px solid #ffe69c;
+    }
+
+    .detail-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .chip {
+      display: inline-block;
+      padding: 0.25rem 0.6rem;
+      border-radius: var(--radius);
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .detail-chips .chip:first-of-type {
+      background: var(--orange-tint);
+      color: var(--orange);
+    }
+
+    .detail-chips .chip:last-of-type {
+      background: var(--navy-tint);
+      color: var(--navy);
+    }
+
+    .detail-price {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: var(--orange);
+    }
+
+    .detail-body {
+      background: var(--surface);
+      border-radius: var(--radius);
+      border: none;
+      box-shadow: var(--shadow-card);
+      padding: 1.25rem;
+    }
+
+    .detail-body h2 {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--navy);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin: 0 0 0.5rem;
+    }
+
+    .detail-body p {
+      margin: 0;
+      white-space: pre-wrap;
+      font-size: 0.95rem;
+      color: var(--text);
+    }
+
+    .detail-valuation {
+      margin-bottom: 1.25rem;
+      padding: 1rem 1rem 1rem calc(1rem - 3px);
+      background: var(--navy-tint);
+      border-radius: var(--radius);
+      border: none;
+      border-left: 3px solid var(--navy);
+      font-size: 0.9rem;
+    }
+
+    .detail-valuation h2 {
+      margin-top: 0;
+    }
+
+    .detail-valuation .val-range-line {
+      margin: 0 0 0.5rem;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.45;
+    }
+
+    .detail-valuation .val-range-line .num {
+      color: var(--orange);
+    }
+
+    .detail-valuation .val-meta {
+      margin: 0;
+      font-size: 0.85rem;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .detail-contact {
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.95rem;
+    }
+
+    .back-row {
+      margin-bottom: 1rem;
+    }
+
+    .btn-back {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 0.9rem;
+      cursor: pointer;
+      padding: 0.25rem 0;
+      font-family: inherit;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .btn-back:hover {
+      color: var(--navy);
+    }
+
+    .field-check {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .field-check input[type="checkbox"] {
+      width: 1.1rem;
+      height: 1.1rem;
+      accent-color: var(--navy);
+    }
+
+    .field-check label {
+      margin: 0;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .valuation-panel {
+      margin-top: 0.25rem;
+      padding: 1rem 1rem 0.95rem calc(1rem - 3px);
+      background: var(--navy-tint);
+      border: none;
+      border-left: 3px solid var(--navy);
+      border-radius: var(--radius);
+      box-shadow: none;
+    }
+
+    .valuation-panel h3 {
+      margin: 0 0 0.65rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--navy);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .valuation-range {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.45;
+      margin: 0 0 0.85rem;
+    }
+
+    .valuation-range .num {
+      color: var(--orange);
+    }
+
+    .valuation-breakdown {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      font-size: 0.8rem;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .valuation-breakdown li {
+      margin-bottom: 0.45rem;
+      padding-left: 0.65rem;
+      border-left: 3px solid rgba(26, 58, 143, 0.22);
+    }
+
+    .valuation-adj-list {
+      margin: 0.35rem 0 0;
+      padding-left: 1rem;
+      font-size: 0.8rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .valuation-adj-list li {
+      border: none;
+      padding: 0;
+      margin: 0 0 0.2rem;
+      list-style: disc;
+    }
+
+    .valuation-breakdown li strong {
+      display: block;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--navy);
+      margin-bottom: 0.15rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .valuation-placeholder {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin: 0;
+    }
+
+    .val-field-block {
+      margin-bottom: 1.1rem;
+    }
+
+    .val-field-block > label.val-block-label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 0.45rem;
+      color: var(--text);
+    }
+
+    .val-option-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+
+    .val-option-row input.val-radio-input {
+      position: absolute;
+      opacity: 0;
+      width: 0;
+      height: 0;
+      pointer-events: none;
+    }
+
+    .val-option-row label.val-option {
+      flex: 0 1 auto;
+      padding: 0.45rem 0.75rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      font-family: inherit;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--muted);
+      cursor: pointer;
+      transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+      text-align: center;
+      min-width: 0;
+    }
+
+    .val-option-row label.val-option:hover {
+      border-color: var(--navy);
+      color: var(--navy);
+    }
+
+    .val-option-row input.val-radio-input:focus-visible + label.val-option {
+      box-shadow: var(--focus-ring);
+    }
+
+    .val-option-row input.val-radio-input:checked + label.val-option {
+      background: var(--navy);
+      border-color: var(--navy);
+      color: #fff;
+    }
+
+    .val-subfield {
+      margin-top: 0.55rem;
+    }
+
+    .detail-val-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      margin: 0.65rem 0 0.5rem;
+    }
+
+    .val-badge {
+      display: inline-block;
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 0.2rem 0.45rem;
+      border-radius: var(--radius);
+      line-height: 1.3;
+    }
+
+    .val-badge--pos {
+      background: rgba(22, 101, 52, 0.12);
+      color: #166534;
+      border: 1px solid rgba(22, 101, 52, 0.35);
+    }
+
+    .val-badge--pos-navy {
+      background: var(--navy-tint);
+      color: var(--navy);
+      border: 1px solid rgba(26, 58, 143, 0.35);
+    }
+
+    .val-badge--risk {
+      background: var(--orange-tint);
+      color: var(--orange);
+      border: 1px solid rgba(214, 119, 11, 0.45);
+    }
+
+    .val-net-debt-line {
+      margin: 0.65rem 0 0;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--navy);
+    }
+
+    .section-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--navy);
+      margin: 1.25rem 0 0.5rem;
+      letter-spacing: 0.03em;
+    }
+
+    @media (min-width: 480px) {
+      .card-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (min-width: 900px) {
+      .view-page-shell {
+        max-width: 960px;
+      }
+      .card-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    /* —— Landing (viewHome) —— */
+    #viewHome {
+      overflow-x: hidden;
+    }
+
+    .home-hero {
+      background: linear-gradient(135deg, #1a3a8f 0%, #152f75 60%, #1a3a8f 100%);
+      text-align: center;
+    }
+
+    #viewHome .home-hero {
+      margin-top: -3.5rem;
+      padding: calc(4rem + 3.5rem) 1rem 4rem;
+    }
+
+    .home-hero-inner {
+      max-width: 640px;
+      margin: 0 auto;
+    }
+
+    .home-hero-tag {
+      display: inline-block;
+      margin: 0 0 1rem;
+      padding: 0.35rem 0.85rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--orange);
+      background: rgba(240, 78, 35, 0.18);
+      border-radius: 999px;
+    }
+
+    .home-hero-title {
+      margin: 0 0 1rem;
+      font-size: clamp(1.65rem, 5vw, 2.15rem);
+      font-weight: 800;
+      color: #fff;
+      line-height: 1.25;
+      letter-spacing: -0.03em;
+    }
+
+    .home-hero-accent {
+      color: var(--orange);
+    }
+
+    .home-hero-sub {
+      margin: 0 0 1.75rem;
+      font-size: 0.95rem;
+      color: rgba(255, 255, 255, 0.7);
+      line-height: 1.65;
+    }
+
+    .home-hero-search-wrap {
+      display: flex;
+      align-items: stretch;
+      width: 100%;
+      max-width: 100%;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: var(--shadow-md);
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .home-hero-search-input {
+      flex: 1 1 auto;
+      min-width: 0;
+      padding: 0.85rem 1rem;
+      border: none;
+      font-size: 1rem;
+      font-family: inherit;
+      outline: none;
+    }
+
+    .home-hero-search-btn {
+      flex: 0 0 auto;
+      padding: 0.85rem 1.15rem;
+      background: var(--orange);
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.95rem;
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.18s ease;
+    }
+
+    .home-hero-search-btn:hover {
+      background: var(--orange-hover);
+    }
+
+    .home-quick {
+      margin-top: 1.35rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem 0.65rem;
+    }
+
+    .home-quick-label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.85);
+    }
+
+    .home-quick-tags {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.4rem;
+    }
+
+    .home-quick-tag {
+      padding: 0.35rem 0.75rem;
+      font-size: 0.78rem;
+      font-weight: 600;
+      font-family: inherit;
+      color: #fff;
+      background: rgba(255, 255, 255, 0.14);
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      border-radius: 999px;
+      cursor: pointer;
+      transition: background 0.15s ease, transform 0.15s ease;
+    }
+
+    .home-quick-tag:hover {
+      background: rgba(255, 255, 255, 0.24);
+      transform: translateY(-1px);
+    }
+
+    .home-features {
+      background: #fff;
+      padding: 3rem 1rem;
+    }
+
+    .home-features-inner {
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    .home-section-title {
+      margin: 0 0 1.35rem;
+      font-size: 0.85rem;
+      font-weight: 800;
+      color: var(--navy);
+      letter-spacing: -0.02em;
+    }
+
+    .home-feature-grid {
+      display: grid;
+      gap: 1rem;
+      grid-template-columns: 1fr;
+    }
+
+    @media (min-width: 480px) {
+      .home-feature-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    .home-feature-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-card);
+      padding: 1.15rem;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .home-feature-card:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-card-hover);
+    }
+
+    .home-feature-icon {
+      font-size: 2rem;
+      line-height: 1;
+      margin-bottom: 0.5rem;
+    }
+
+    .home-feature-card h3 {
+      margin: 0 0 0.5rem;
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    .home-feature-card p {
+      margin: 0;
+      font-size: 0.82rem;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .home-stats {
+      background: var(--navy-tint);
+      padding: 2.5rem 1rem;
+    }
+
+    .home-stats-inner {
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    .home-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.75rem;
+      text-align: center;
+    }
+
+    .home-stat-val {
+      margin: 0 0 0.35rem;
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--orange);
+      line-height: 1.2;
+    }
+
+    .home-stat-label {
+      margin: 0;
+      font-size: 0.8rem;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    .home-cta {
+      background: var(--navy);
+      padding: 3rem 1rem;
+      text-align: center;
+    }
+
+    .home-cta-inner {
+      max-width: 520px;
+      margin: 0 auto;
+    }
+
+    .home-cta h2 {
+      margin: 0 0 0.5rem;
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    .home-cta p {
+      margin: 0 0 1.35rem;
+      font-size: 0.95rem;
+      color: rgba(255, 255, 255, 0.88);
+    }
+
+    .home-cta-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.75rem;
+    }
+
+    .home-cta-actions .btn-primary {
+      min-width: 8.5rem;
+    }
+
+    .home-cta-actions .btn-ghost-on-navy {
+      background: transparent;
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.85);
+    }
+
+    .home-cta-actions .btn-ghost-on-navy:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff;
+      border-color: #fff;
+    }
+
+    .detail-interest-block {
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .detail-interest-actions {
+      margin-bottom: 0.4rem;
+    }
+
+    .detail-interest-count {
+      margin: 0;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--muted);
+    }
+
+    .btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      box-sizing: border-box;
+    }
+
+    .modal[hidden] {
+      display: none !important;
+    }
+
+    .modal-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(26, 29, 33, 0.48);
+      border: none;
+      padding: 0;
+      cursor: pointer;
+    }
+
+    .modal-dialog {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 420px;
+      max-height: min(90dvh, 640px);
+      display: flex;
+      flex-direction: column;
+      background: var(--surface);
+      border-radius: var(--radius);
+      border: none;
+      box-shadow: var(--shadow-modal);
+      overflow: hidden;
+    }
+
+    .modal-body {
+      padding: 1.25rem 1.25rem 1.3rem;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .modal-title {
+      margin: 0 0 1rem;
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: -0.02em;
+    }
+
+    .modal-nda-block {
+      margin-bottom: 1rem;
+      padding: 0.9rem;
+      background: var(--navy-tint);
+      border-radius: var(--radius);
+      border: none;
+      border-left: 3px solid var(--navy);
+    }
+
+    .modal-nda-block .field {
+      margin-bottom: 0;
+    }
+
+    .modal-nda-lead {
+      margin: 0 0 0.65rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.45;
+    }
+
+    .field-nda label {
+      font-weight: 500;
+      font-size: 0.85rem;
+      line-height: 1.45;
+      color: var(--text);
+    }
+
+    .modal-footer-btns {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-top: 1.1rem;
+    }
+
+    .modal-footer-btns .btn {
+      width: 100%;
+    }
+
+    .modal-success-msg {
+      margin: 0 0 1.1rem;
+      font-size: 0.95rem;
+      line-height: 1.55;
+      color: var(--text);
+    }
+
+    #interestModalStepSuccess {
+      text-align: center;
+    }
+
+    #interestModalStepSuccess .btn {
+      width: 100%;
+    }
+
+    .detail-delete-wrap {
+      margin-top: 1.25rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .detail-owner-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .status-radio-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.55rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .status-radio-group label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.92rem;
+      font-weight: 500;
+      color: var(--text);
+      cursor: pointer;
+    }
+
+    .status-radio-group input {
+      width: 1rem;
+      height: 1rem;
+      accent-color: var(--navy);
+    }
+
+    .modal-delete-lead {
+      margin: 0 0 1rem;
+      font-size: 0.95rem;
+      line-height: 1.55;
+      color: var(--text);
+    }
+
+    .btn-delete-confirm {
+      background: var(--orange);
+      color: #fff;
+    }
+
+    .btn-delete-confirm:hover {
+      background: var(--orange-hover);
+      color: #fff;
+    }
+
+  </style>
+</head>
+<body>
+  <header class="app-header header--transparent">
+    <button type="button" class="logo" id="navHome" aria-label="홈으로">가게야</button>
+    <div class="header-actions">
+      <button type="button" class="btn btn-ghost" id="navList">매물 보기</button>
+      <button type="button" class="btn btn-primary" id="navRegister">매물 등록</button>
+    </div>
+  </header>
+
+  <main>
+    <section id="viewHome" class="view active" aria-label="가게야 홈">
+      <div class="home-hero">
+        <div class="home-hero-inner">
+          <p class="home-hero-tag">🏪 자영업 가게 전문 거래 플랫폼</p>
+          <h1 class="home-hero-title">
+            가게 사고파는 가장<br /><span class="home-hero-accent">쉽고 투명한</span> 방법
+          </h1>
+          <p class="home-hero-sub">
+            기업 M&amp;A 현장에서 쓰는 가치 평가 기법으로 적정 가격을 확인하고<br />
+            검증된 매물을 빠르게 찾아보세요.
+          </p>
+          <div class="home-hero-search-wrap">
+            <input
+              type="search"
+              id="homeSearchInput"
+              class="home-hero-search-input"
+              placeholder="지역, 업종, 가게 이름으로 검색"
+              autocomplete="off"
+              aria-label="매물 검색"
+            />
+            <button type="button" class="home-hero-search-btn" id="homeSearchBtn">검색</button>
+          </div>
+          <div class="home-quick">
+            <span class="home-quick-label">빠른 선택:</span>
+            <div class="home-quick-tags">
+              <button type="button" class="home-quick-tag" data-home-category="식당">식당</button>
+              <button type="button" class="home-quick-tag" data-home-category="카페">카페</button>
+              <button type="button" class="home-quick-tag" data-home-category="미용실">미용실</button>
+              <button type="button" class="home-quick-tag" data-home-category="편의점">편의점</button>
+              <button type="button" class="home-quick-tag" data-home-category="기타">기타</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="home-features">
+        <div class="home-features-inner">
+          <h2 class="home-section-title">왜 가게야인가요?</h2>
+          <div class="home-feature-grid">
+            <div class="home-feature-card">
+              <div class="home-feature-icon" aria-hidden="true">🏦</div>
+              <h3>기관 투자자급 가치 평가</h3>
+              <p>
+                PE·VC가 실제 기업 인수에 활용하는 DCF(현금흐름할인)와 Multiple(수익 배수) 방식으로 적정 가격을 산출합니다. 감이 아닌 숫자로 협상하세요.
+              </p>
+            </div>
+            <div class="home-feature-card">
+              <div class="home-feature-icon" aria-hidden="true">🤝</div>
+              <h3>투명한 거래 정보</h3>
+              <p>
+                매출 추세, 임대 조건, 배달 비중까지. 숨겨진 리스크를 미리 확인하고 안전하게 거래하세요.
+              </p>
+            </div>
+            <div class="home-feature-card">
+              <div class="home-feature-icon" aria-hidden="true">⚡</div>
+              <h3>빠른 매수자 연결</h3>
+              <p>
+                관심 표명 시스템으로 진지한 매수자와 판매자를 빠르게 연결합니다. NDA 동의 후 연락처 공유.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="home-stats">
+        <div class="home-stats-inner">
+          <div class="home-stats-grid">
+            <div>
+              <p class="home-stat-val">DCF·Multiple</p>
+              <p class="home-stat-label">기업가치 산정 방식</p>
+            </div>
+            <div>
+              <p class="home-stat-val">9가지</p>
+              <p class="home-stat-label">리스크 분석 항목</p>
+            </div>
+            <div>
+              <p class="home-stat-val">무료</p>
+              <p class="home-stat-label">매물 등록·조회</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="home-cta">
+        <div class="home-cta-inner">
+          <h2>지금 바로 시작하세요</h2>
+          <p>매물 등록도, 검색도 모두 무료입니다.</p>
+          <div class="home-cta-actions">
+            <button type="button" class="btn btn-primary" id="homeCtaList">매물 보기</button>
+            <button type="button" class="btn btn-ghost btn-ghost-on-navy" id="homeCtaRegister">매물 등록하기</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="view-page-shell">
+    <section id="viewList" class="view" aria-labelledby="listHeading">
+      <h1 id="listHeading" class="page-title">매물 목록</h1>
+      <p class="page-desc">검증된 정보 기반으로 가게 매매 기회를 비교·검토해 보세요.</p>
+
+      <div class="list-toolbar" id="listToolbar">
+        <div class="list-toolbar-top">
+          <div class="list-toolbar-top-main">
+            <p class="listing-count" id="listingCount" aria-live="polite">총 <span>0</span>개 매물</p>
+            <span id="filterActiveBadge" class="filter-active-badge" hidden>필터 0개 적용 중</span>
+          </div>
+          <button type="button" class="btn btn-ghost filter-collapse-btn" id="filterCollapseToggle" aria-expanded="true">
+            필터 접기 ▲
+          </button>
+        </div>
+        <div class="list-toolbar-search-block">
+          <label class="filter-label" for="filterSearch">검색</label>
+          <input
+            type="search"
+            class="filter-search"
+            id="filterSearch"
+            placeholder="가게 이름, 지역 키워드"
+            autocomplete="off"
+          />
+          <div id="recentSearchWrap" class="recent-search-wrap" hidden>
+            <div class="recent-search-inner">
+              <span class="recent-search-label">최근</span>
+              <div id="recentSearchTags" class="recent-search-tags"></div>
+              <button type="button" class="btn btn-ghost recent-search-clear-all" id="recentSearchClearAll">
+                전체 삭제
+              </button>
+            </div>
+          </div>
+        </div>
+        <div id="listToolbarFilters" class="list-toolbar-filters">
+          <div class="filter-tabs-wrap">
+            <span class="filter-label">업종</span>
+            <div class="filter-tabs" id="filterCategoryTabs" role="tablist" aria-label="업종 필터">
+              <button type="button" class="filter-tab is-active" data-category="" role="tab" aria-selected="true">전체</button>
+              <button type="button" class="filter-tab" data-category="식당" role="tab" aria-selected="false">식당</button>
+              <button type="button" class="filter-tab" data-category="카페" role="tab" aria-selected="false">카페</button>
+              <button type="button" class="filter-tab" data-category="미용실" role="tab" aria-selected="false">미용실</button>
+              <button type="button" class="filter-tab" data-category="편의점" role="tab" aria-selected="false">편의점</button>
+              <button type="button" class="filter-tab" data-category="마트·잡화" role="tab" aria-selected="false">마트·잡화</button>
+              <button type="button" class="filter-tab" data-category="기타" role="tab" aria-selected="false">기타</button>
+            </div>
+          </div>
+          <div class="filter-tabs-wrap">
+            <span class="filter-label">지역</span>
+            <div class="filter-tabs" id="filterRegionTabs" role="tablist" aria-label="지역 필터">
+              <button type="button" class="filter-tab is-active" data-region="" role="tab" aria-selected="true">전체</button>
+              <button type="button" class="filter-tab" data-region="seoul" role="tab" aria-selected="false">서울</button>
+              <button type="button" class="filter-tab" data-region="gyeonggi" role="tab" aria-selected="false">경기</button>
+              <button type="button" class="filter-tab" data-region="incheon" role="tab" aria-selected="false">인천</button>
+              <button type="button" class="filter-tab" data-region="busan" role="tab" aria-selected="false">부산</button>
+              <button type="button" class="filter-tab" data-region="daegu" role="tab" aria-selected="false">대구</button>
+              <button type="button" class="filter-tab" data-region="other" role="tab" aria-selected="false">기타</button>
+            </div>
+          </div>
+          <span class="filter-label">가격 구간 (만 원)</span>
+          <div class="filter-tabs-wrap">
+            <div class="filter-tabs" id="filterPriceRangeTabs" role="tablist" aria-label="가격 구간">
+              <button type="button" class="filter-tab is-active" data-min="" data-max="" role="tab" aria-selected="true">전체</button>
+              <button type="button" class="filter-tab" data-min="" data-max="5000" role="tab" aria-selected="false">~5천만</button>
+              <button type="button" class="filter-tab" data-min="5001" data-max="10000" role="tab" aria-selected="false">5천~1억</button>
+              <button type="button" class="filter-tab" data-min="10001" data-max="30000" role="tab" aria-selected="false">1억~3억</button>
+              <button type="button" class="filter-tab" data-min="30001" data-max="" role="tab" aria-selected="false">3억 이상</button>
+            </div>
+          </div>
+          <div class="filter-toggle-row">
+            <input type="checkbox" id="filterUseValuation" />
+            <label for="filterUseValuation">추정가 기준으로 보기</label>
+            <p class="filter-toggle-hint">켜면 위 가격 구간이 <strong>보수적 추정가</strong>(만 원)에 적용됩니다. 끄면 희망 가격 텍스트에서 숫자를 읽어 적용합니다.</p>
+          </div>
+          <div class="filter-toggle-row">
+            <input type="checkbox" id="filterOnlyAvailable" checked />
+            <label for="filterOnlyAvailable">거래가능 매물만 보기</label>
+          </div>
+          <div class="filter-toggle-row">
+            <input type="checkbox" id="filterUndervalued" />
+            <label for="filterUndervalued">추정가보다 저렴한 매물만</label>
+            <p class="filter-toggle-hint">희망가격이 보수적 추정가보다 낮은 매물</p>
+          </div>
+          <div class="filter-toggle-row">
+            <input type="checkbox" id="filterHasPhotos" />
+            <label for="filterHasPhotos">사진 있는 매물만</label>
+          </div>
+          <div class="filter-tabs-wrap">
+            <span class="filter-label">임대 잔여기간</span>
+            <div class="filter-tabs" id="filterLeaseTabs" role="tablist" aria-label="임대 잔여기간">
+              <button type="button" class="filter-tab is-active" data-lease="" role="tab" aria-selected="true">전체</button>
+              <button type="button" class="filter-tab" data-lease="12" role="tab" aria-selected="false">12개월 이상</button>
+              <button type="button" class="filter-tab" data-lease="24" role="tab" aria-selected="false">24개월 이상</button>
+              <button type="button" class="filter-tab" data-lease="36" role="tab" aria-selected="false">36개월 이상</button>
+            </div>
+          </div>
+          <span class="filter-label">정렬</span>
+          <div class="filter-sort-row">
+            <select id="filterSort" aria-label="정렬">
+              <option value="newest">최신순</option>
+              <option value="valAsc">추정가 낮은순</option>
+              <option value="valDesc">추정가 높은순</option>
+            </select>
+          </div>
+          <div class="filter-actions">
+            <button type="button" class="btn btn-outline" id="filterReset">필터 초기화</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="cardContainer" class="card-grid"></div>
+    </section>
+
+    <section id="viewRegister" class="view" aria-labelledby="registerHeading">
+      <h1 id="registerHeading" class="page-title">매물 등록</h1>
+      <p class="page-desc">매물 정보를 등록해 두시면 동일 브라우저에 안전하게 저장됩니다.</p>
+      <form class="register-form" id="registerForm" novalidate>
+        <div class="field">
+          <label for="storeName">가게 이름 <span aria-hidden="true">*</span></label>
+          <input type="text" id="storeName" name="storeName" required maxlength="80" placeholder="예: 행복한 밥상" />
+        </div>
+        <div class="field">
+          <label for="category">업종 <span aria-hidden="true">*</span></label>
+          <select id="category" name="category" required>
+            <option value="">선택하세요</option>
+            <option value="식당">식당</option>
+            <option value="카페">카페</option>
+            <option value="미용실">미용실</option>
+            <option value="편의점">편의점</option>
+            <option value="마트·잡화">마트·잡화</option>
+            <option value="기타">기타</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="region">지역 <span aria-hidden="true">*</span></label>
+          <input type="text" id="region" name="region" required maxlength="60" placeholder="예: 서울 마포구, 부산 해운대구" />
+        </div>
+
+        <p class="section-label">가치 추정 (참고)</p>
+        <div class="field">
+          <label for="monthlyRevenue">월 평균 매출 (만 원)</label>
+          <input type="number" id="monthlyRevenue" name="monthlyRevenue" min="0" step="1" inputmode="numeric" placeholder="예: 3000" />
+          <p class="field-hint">숫자만 입력합니다. 추정 계산에는 직접 쓰이지 않고 참고용으로 표시됩니다.</p>
+        </div>
+
+        <div class="val-field-block">
+          <span class="val-block-label">이익 입력 방식</span>
+          <div class="val-option-row" role="radiogroup" aria-label="이익 입력 방식">
+            <input type="radio" name="profitInputMode" id="profitInputModeMonthly" value="monthly" class="val-radio-input" checked />
+            <label class="val-option" for="profitInputModeMonthly">월 평균 입력</label>
+            <input type="radio" name="profitInputMode" id="profitInputModeSix" value="sixMonth" class="val-radio-input" />
+            <label class="val-option" for="profitInputModeSix">최근 6개월 합계 입력</label>
+          </div>
+          <div id="monthlyProfitWrap" class="val-subfield field">
+            <label for="monthlyProfit">월 평균 영업이익 (만 원)</label>
+            <input type="number" id="monthlyProfit" name="monthlyProfit" min="0" step="1" inputmode="numeric" placeholder="예: 200" />
+          </div>
+          <div id="sixMonthProfitWrap" class="val-subfield field" hidden>
+            <label for="sixMonthProfit">최근 6개월 영업이익 합계 (만 원)</label>
+            <input type="number" id="sixMonthProfit" name="sixMonthProfit" min="0" step="1" inputmode="numeric" placeholder="예: 1200" />
+            <p class="field-hint">월평균 = 합계 ÷ 6으로 자동 반영됩니다.</p>
+          </div>
+        </div>
+
+        <div class="val-field-block">
+          <span class="val-block-label">매출 추세</span>
+          <p class="field-hint">최근 1년 기준으로 선택해 주세요</p>
+          <div class="val-option-row" role="radiogroup" aria-label="매출 추세">
+            <input type="radio" name="revenueTrend" id="revTrendUp" value="up" class="val-radio-input" checked />
+            <label class="val-option" for="revTrendUp">📈 늘고 있어요</label>
+            <input type="radio" name="revenueTrend" id="revTrendStable" value="stable" class="val-radio-input" />
+            <label class="val-option" for="revTrendStable">📊 비슷해요</label>
+            <input type="radio" name="revenueTrend" id="revTrendDown" value="down" class="val-radio-input" />
+            <label class="val-option" for="revTrendDown">📉 줄고 있어요</label>
+          </div>
+        </div>
+
+        <div class="val-field-block">
+          <span class="val-block-label">사장님 직접 근무 여부</span>
+          <p class="field-hint">직접 일하는 경우 시장 인건비를 반영해 실제 수익을 조정합니다</p>
+          <div class="val-option-row" role="radiogroup" aria-label="사장님 직접 근무">
+            <input type="radio" name="ownerWorks" id="ownerWorksYes" value="yes" class="val-radio-input" checked />
+            <label class="val-option" for="ownerWorksYes">예, 직접 일해요</label>
+            <input type="radio" name="ownerWorks" id="ownerWorksNo" value="no" class="val-radio-input" />
+            <label class="val-option" for="ownerWorksNo">아니요, 직원에게 맡겨요</label>
+          </div>
+          <div id="ownerWorkHoursWrap" class="val-subfield field">
+            <label for="ownerWorkHours">하루 평균 근무 시간 (시간)</label>
+            <input type="number" id="ownerWorkHours" name="ownerWorkHours" min="1" max="16" step="1" inputmode="numeric" placeholder="1~16" />
+          </div>
+        </div>
+
+        <div class="val-field-block">
+          <span class="val-block-label">계절성</span>
+          <div class="val-option-row" role="radiogroup" aria-label="계절성">
+            <input type="radio" name="seasonality" id="seasonNone" value="none" class="val-radio-input" checked />
+            <label class="val-option" for="seasonNone">거의 없어요</label>
+            <input type="radio" name="seasonality" id="seasonSome" value="some" class="val-radio-input" />
+            <label class="val-option" for="seasonSome">조금 있어요</label>
+            <input type="radio" name="seasonality" id="seasonHigh" value="high" class="val-radio-input" />
+            <label class="val-option" for="seasonHigh">많이 있어요</label>
+          </div>
+        </div>
+
+        <div class="val-field-block">
+          <span class="val-block-label">임대 재계약 가능성</span>
+          <div class="val-option-row" role="radiogroup" aria-label="임대 재계약">
+            <input type="radio" name="leaseRenewal" id="leaseCertain" value="certain" class="val-radio-input" checked />
+            <label class="val-option" for="leaseCertain">재계약 확실해요</label>
+            <input type="radio" name="leaseRenewal" id="leaseUncertain" value="uncertain" class="val-radio-input" />
+            <label class="val-option" for="leaseUncertain">불확실해요</label>
+            <input type="radio" name="leaseRenewal" id="leaseUnknown" value="unknown" class="val-radio-input" />
+            <label class="val-option" for="leaseUnknown">모르겠어요</label>
+          </div>
+        </div>
+
+        <div class="val-field-block">
+          <span class="val-block-label">배달 매출 비중</span>
+          <p class="field-hint">배달앱 매출 비중이 높을수록 플랫폼 리스크가 반영됩니다</p>
+          <div class="val-option-row" role="radiogroup" aria-label="배달 매출 비중">
+            <input type="radio" name="deliveryRatio" id="delNone" value="none" class="val-radio-input" checked />
+            <label class="val-option" for="delNone">없음</label>
+            <input type="radio" name="deliveryRatio" id="delLow" value="low" class="val-radio-input" />
+            <label class="val-option" for="delLow">30% 미만</label>
+            <input type="radio" name="deliveryRatio" id="delMid" value="mid" class="val-radio-input" />
+            <label class="val-option" for="delMid">30~70%</label>
+            <input type="radio" name="deliveryRatio" id="delHigh" value="high" class="val-radio-input" />
+            <label class="val-option" for="delHigh">70% 이상</label>
+          </div>
+        </div>
+
+        <div class="val-field-block">
+          <div class="field">
+            <label for="staffCount">직원 수 (사장님 제외)</label>
+            <input type="number" id="staffCount" name="staffCount" min="0" step="1" inputmode="numeric" placeholder="예: 2" />
+          </div>
+          <span class="val-block-label" style="margin-top: 0.65rem">인수 후에도 계속 근무 예정인가요?</span>
+          <div class="val-option-row" role="radiogroup" aria-label="직원 인수">
+            <input type="radio" name="staffStays" id="staffStaysYes" value="yes" class="val-radio-input" checked />
+            <label class="val-option" for="staffStaysYes">예</label>
+            <input type="radio" name="staffStays" id="staffStaysUncertain" value="uncertain" class="val-radio-input" />
+            <label class="val-option" for="staffStaysUncertain">불확실</label>
+          </div>
+        </div>
+
+        <div class="val-field-block">
+          <span class="val-block-label">설비·인테리어 연식</span>
+          <p class="field-hint">오래될수록 인수 후 교체 비용이 발생할 수 있습니다</p>
+          <div class="val-option-row" role="radiogroup" aria-label="설비 연식">
+            <input type="radio" name="equipmentAge" id="equipNew" value="new" class="val-radio-input" checked />
+            <label class="val-option" for="equipNew">3년 미만</label>
+            <input type="radio" name="equipmentAge" id="equipMid" value="mid" class="val-radio-input" />
+            <label class="val-option" for="equipMid">3~7년</label>
+            <input type="radio" name="equipmentAge" id="equipOld" value="old" class="val-radio-input" />
+            <label class="val-option" for="equipOld">7년 이상</label>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="liabilities">승계 부채·보증금 (만 원, 선택)</label>
+          <input type="number" id="liabilities" name="liabilities" min="0" step="1" inputmode="numeric" placeholder="없으면 비워 두세요" />
+          <p class="field-hint">임대 보증금, 설비 할부, 대출 등 인수자가 떠안는 금액</p>
+        </div>
+
+        <div class="val-field-block">
+          <span class="val-block-label">매출 증빙 가능 여부</span>
+          <p class="field-hint">증빙 가능 시 신뢰도 높은 추정가가 적용됩니다</p>
+          <div class="val-option-row" role="radiogroup" aria-label="매출 증빙">
+            <input type="radio" name="revenueVerifiable" id="revVerYes" value="yes" class="val-radio-input" checked />
+            <label class="val-option" for="revVerYes">홈택스·카드매출로 증빙 가능</label>
+            <input type="radio" name="revenueVerifiable" id="revVerNo" value="no" class="val-radio-input" />
+            <label class="val-option" for="revVerNo">증빙 어려워요</label>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="field-check">
+            <input type="checkbox" id="keyMoneyIncluded" name="keyMoneyIncluded" />
+            <label for="keyMoneyIncluded">권리금 포함 여부</label>
+          </div>
+        </div>
+        <div class="field">
+          <label for="leaseRemainingMonths">임대 잔여 기간 (개월)</label>
+          <input type="number" id="leaseRemainingMonths" name="leaseRemainingMonths" min="0" step="1" inputmode="numeric" placeholder="예: 24" />
+        </div>
+
+        <div class="valuation-panel" id="valuationPanel" aria-live="polite">
+          <h3>자동 추정가 (만 원)</h3>
+          <p class="valuation-placeholder" id="valuationPlaceholder">업종을 선택하고 월 영업이익을 입력하면 추정 범위가 표시됩니다.</p>
+          <p class="valuation-range" id="valuationRange" hidden></p>
+          <ul class="valuation-breakdown" id="valuationBreakdown" hidden></ul>
+        </div>
+
+        <div class="field">
+          <label for="price">희망 가격 <span aria-hidden="true">*</span></label>
+          <input type="text" id="price" name="price" required maxlength="40" placeholder="예: 5,000만 원 (협의 가능)" />
+        </div>
+        <div class="field">
+          <label for="description">상세 설명</label>
+          <textarea id="description" name="description" maxlength="2000" placeholder="면적, 임대 조건, 장비, 양도 사유 등 자유롭게 적어 주세요."></textarea>
+          <p class="field-hint">개인정보(전화번호 등)는 신중하게 공개하세요.</p>
+        </div>
+        <div class="field">
+          <label for="contact">연락처 (선택)</label>
+          <input type="text" id="contact" name="contact" maxlength="80" placeholder="예: 카카오 ID, 이메일 (공개됩니다)" />
+        </div>
+        <div class="field">
+          <label for="listingPhoto">사진 (선택)</label>
+          <p class="field-hint">최대 5장까지 선택할 수 있습니다.</p>
+          <input type="file" id="listingPhoto" name="listingPhoto" accept="image/*" multiple />
+          <div id="listingPhotoPreviewRow" class="listing-photo-preview-row" aria-live="polite"></div>
+        </div>
+        <div class="field">
+          <label for="listingDeletePin">삭제 비밀번호 (숫자 4자리, 선택)</label>
+          <input
+            type="password"
+            id="listingDeletePin"
+            name="listingDeletePin"
+            maxlength="4"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            placeholder="미입력 시 상세에서 삭제 불가"
+            autocomplete="new-password"
+          />
+          <p class="field-hint">나중에 매물 삭제 시 사용합니다. 숫자 4자리만 저장됩니다.</p>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">등록하기</button>
+          <button type="button" class="btn btn-secondary" id="cancelRegister">취소</button>
+        </div>
+      </form>
+    </section>
+
+    <section id="viewDetail" class="view" aria-labelledby="detailTitle">
+      <div class="back-row">
+        <button type="button" class="btn-back" id="detailBack">← 목록으로</button>
+      </div>
+      <div class="detail-hero">
+        <div id="detailPhotoWrap" class="detail-photo-wrap" hidden>
+          <div id="detailPhotoSingle" class="detail-photo-single" hidden>
+            <img id="detailPhotoImg" src="" alt="" decoding="async" />
+          </div>
+          <div id="detailPhotoSlider" class="detail-photo-slider" hidden>
+            <div class="detail-photo-slider-inner">
+              <button type="button" class="detail-photo-nav detail-photo-prev" id="detailPhotoPrev" aria-label="이전 사진">
+                ←
+              </button>
+              <div class="detail-photo-viewport" id="detailPhotoViewport">
+                <div class="detail-photo-track" id="detailPhotoTrack"></div>
+              </div>
+              <button type="button" class="detail-photo-nav detail-photo-next" id="detailPhotoNext" aria-label="다음 사진">
+                →
+              </button>
+            </div>
+            <div class="detail-photo-dots" id="detailPhotoDots"></div>
+          </div>
+        </div>
+        <h1 id="detailTitle" class="detail-name"></h1>
+        <div id="detailStatusRow" class="detail-status-row" hidden>
+          <span id="detailStatusBadge" class="listing-status-badge"></span>
+        </div>
+        <p id="detailStatusNotice" class="detail-status-notice" hidden></p>
+        <div class="detail-chips" id="detailChips"></div>
+        <div class="detail-price" id="detailPrice"></div>
+        <div class="detail-interest-block">
+          <div class="detail-interest-actions">
+            <button type="button" class="btn btn-primary" id="detailInterestBtn">관심 있어요</button>
+          </div>
+          <p class="detail-interest-count" id="detailInterestCount" aria-live="polite">관심 0명</p>
+        </div>
+      </div>
+      <div class="detail-body">
+        <div id="detailValuationWrap" class="detail-valuation" hidden></div>
+        <h2>상세 설명</h2>
+        <p id="detailDescription"></p>
+        <div class="detail-contact" id="detailContactWrap" hidden>
+          <h2>연락처</h2>
+          <p id="detailContact"></p>
+        </div>
+        <div class="detail-delete-wrap" id="detailDeleteWrap" hidden>
+          <div class="detail-owner-actions">
+            <button type="button" class="btn btn-outline" id="detailStatusBtn">상태 변경</button>
+            <button type="button" class="btn btn-outline" id="detailPhotoEditBtn">사진 변경</button>
+            <button type="button" class="btn btn-outline" id="detailDeleteBtn">매물 삭제</button>
+          </div>
+        </div>
+      </div>
+    </section>
+    </div>
+  </main>
+
+  <div id="interestModal" class="modal" hidden aria-hidden="true">
+    <button type="button" class="modal-backdrop" id="interestModalBackdrop" aria-label="닫기" tabindex="-1"></button>
+    <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="interestModalTitle">
+      <div class="modal-body">
+        <div id="interestModalStepForm">
+          <h2 class="modal-title" id="interestModalTitle">관심 표명</h2>
+          <div class="modal-nda-block">
+            <p class="modal-nda-lead">아래 정보는 판매자에게 전달됩니다</p>
+            <div class="field field-check field-nda">
+              <input type="checkbox" id="interestNdaAgree" />
+              <label for="interestNdaAgree">본 내용은 비공개로 처리되며 외부에 공유하지 않겠습니다</label>
+            </div>
+          </div>
+          <div class="field">
+            <label for="interestBuyerName">이름 <span aria-hidden="true">*</span></label>
+            <input type="text" id="interestBuyerName" maxlength="60" autocomplete="name" />
+          </div>
+          <div class="field">
+            <label for="interestBuyerContact">연락처 (이메일 또는 카카오 ID) <span aria-hidden="true">*</span></label>
+            <input type="text" id="interestBuyerContact" maxlength="120" />
+          </div>
+          <div class="field">
+            <label for="interestBuyerIntro">간단한 자기소개 및 관심 이유</label>
+            <textarea id="interestBuyerIntro" maxlength="1500" rows="4" placeholder="선택 사항입니다."></textarea>
+          </div>
+          <div class="field">
+            <label for="interestBuyerBudget">예산 범위 (선택)</label>
+            <input type="text" id="interestBuyerBudget" maxlength="80" placeholder="예: 3천만~5천만 원" />
+          </div>
+          <div class="modal-footer-btns">
+            <button type="button" class="btn btn-primary" id="interestSubmitBtn">관심 전달하기</button>
+            <button type="button" class="btn btn-secondary" id="interestCancelBtn">취소</button>
+          </div>
+        </div>
+        <div id="interestModalStepSuccess" hidden>
+          <p class="modal-success-msg">관심이 전달되었습니다. 판매자가 확인 후 연락드립니다.</p>
+          <button type="button" class="btn btn-primary" id="interestSuccessBtn">확인</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="deleteModal" class="modal" hidden aria-hidden="true">
+    <button type="button" class="modal-backdrop" id="deleteModalBackdrop" aria-label="닫기" tabindex="-1"></button>
+    <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="deleteModalTitle">
+      <div class="modal-body">
+        <h2 class="modal-title" id="deleteModalTitle">매물 삭제</h2>
+        <p class="modal-delete-lead">이 매물을 삭제하시겠습니까?</p>
+        <div class="field">
+          <label for="deletePinInput">삭제 비밀번호 (숫자 4자리)</label>
+          <input
+            type="password"
+            id="deletePinInput"
+            maxlength="4"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            autocomplete="off"
+          />
+        </div>
+        <div class="modal-footer-btns">
+          <button type="button" class="btn btn-delete-confirm" id="deleteConfirmBtn">삭제하기</button>
+          <button type="button" class="btn btn-secondary" id="deleteCancelBtn">취소</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="statusModal" class="modal" hidden aria-hidden="true">
+    <button type="button" class="modal-backdrop" id="statusModalBackdrop" aria-label="닫기" tabindex="-1"></button>
+    <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="statusModalTitlePin">
+      <div class="modal-body">
+        <div id="statusModalStepPin">
+          <h2 class="modal-title" id="statusModalTitlePin">상태 변경</h2>
+          <p class="modal-delete-lead">비밀번호를 입력한 뒤 상태를 변경할 수 있습니다.</p>
+          <div class="field">
+            <label for="statusPinInput">삭제 비밀번호 (숫자 4자리)</label>
+            <input
+              type="password"
+              id="statusPinInput"
+              maxlength="4"
+              inputmode="numeric"
+              pattern="[0-9]*"
+              autocomplete="off"
+            />
+          </div>
+          <div class="modal-footer-btns">
+            <button type="button" class="btn btn-primary" id="statusPinNextBtn">다음</button>
+            <button type="button" class="btn btn-secondary" id="statusModalCancelBtn">취소</button>
+          </div>
+        </div>
+        <div id="statusModalStepForm" hidden>
+          <h2 class="modal-title" id="statusModalTitleForm">상태 선택</h2>
+          <div class="status-radio-group" role="radiogroup" aria-label="매물 상태">
+            <label>
+              <input type="radio" name="listingStatusChoice" value="available" id="statusChoiceAvailable" />
+              거래가능
+            </label>
+            <label>
+              <input type="radio" name="listingStatusChoice" value="negotiating" id="statusChoiceNegotiating" />
+              협의중
+            </label>
+            <label>
+              <input type="radio" name="listingStatusChoice" value="sold" id="statusChoiceSold" />
+              거래완료
+            </label>
+          </div>
+          <div class="modal-footer-btns">
+            <button type="button" class="btn btn-primary" id="statusSaveBtn">저장하기</button>
+            <button type="button" class="btn btn-secondary" id="statusFormCancelBtn">취소</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="photoEditModal" class="modal" hidden aria-hidden="true">
+    <button type="button" class="modal-backdrop" id="photoEditModalBackdrop" aria-label="닫기" tabindex="-1"></button>
+    <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="photoEditModalTitlePin">
+      <div class="modal-body">
+        <div id="photoEditModalStepPin">
+          <h2 class="modal-title" id="photoEditModalTitlePin">사진 변경</h2>
+          <p class="modal-delete-lead">비밀번호를 입력한 뒤 사진을 변경할 수 있습니다.</p>
+          <div class="field">
+            <label for="photoEditPinInput">삭제 비밀번호 (숫자 4자리)</label>
+            <input
+              type="password"
+              id="photoEditPinInput"
+              maxlength="4"
+              inputmode="numeric"
+              pattern="[0-9]*"
+              autocomplete="off"
+            />
+          </div>
+          <div class="modal-footer-btns">
+            <button type="button" class="btn btn-primary" id="photoEditPinNextBtn">다음</button>
+            <button type="button" class="btn btn-secondary" id="photoEditModalCancelBtn">취소</button>
+          </div>
+        </div>
+        <div id="photoEditModalStepForm" hidden>
+          <h2 class="modal-title" id="photoEditModalTitleForm">사진 변경</h2>
+          <p class="field-hint">최대 5장까지 등록할 수 있습니다. 썸네일의 ×로 개별 삭제할 수 있습니다.</p>
+          <div id="photoEditDraftRow" class="listing-photo-preview-row photo-edit-draft-row"></div>
+          <div class="field">
+            <label for="photoEditFile">사진 추가</label>
+            <input type="file" id="photoEditFile" accept="image/*" multiple />
+          </div>
+          <div class="modal-footer-btns">
+            <button type="button" class="btn btn-primary" id="photoEditSaveBtn">저장하기</button>
+            <button type="button" class="btn btn-outline" id="photoEditDeleteBtn">사진 전체 삭제</button>
+            <button type="button" class="btn btn-secondary" id="photoEditFormCancelBtn">취소</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var STORAGE_KEY = "gaegedang_listings_v1";
+      var STORAGE_KEY_LEGACY = "gaegaejangteo_listings_v1";
+      var INTEREST_COUNTS_KEY = "gaegedang_interest_counts_v1";
+      var PIN_MIGRATED_KEY = "gaegedang_pin_migrated";
+      var PHOTO_MIGRATION_KEY = "gaegedang_photo_migrated";
+      var PHOTOS_V2_MIGRATION_KEY = "gaegedang_photos_v2_migrated";
+      var VALUATION_V2_MIGRATION_KEY = "gaegedang_valuation_v2_migrated";
+      var MAX_LISTING_PHOTOS = 5;
+
+      var SAMPLE_PHOTOS_BY_CATEGORY = {
+        식당: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&q=70",
+        카페: "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=800&q=70",
+        미용실: "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=800&q=70",
+        편의점: "https://images.unsplash.com/photo-1604719312566-8912e9c8a213?w=800&q=70",
+        "마트·잡화": "https://images.unsplash.com/photo-1542838132-92c53300491e?w=800&q=70",
+        기타: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800&q=70",
+      };
+
+      var pendingRegisterPhotos = [];
+      var photoEditDraftPhotos = [];
+      var detailPhotoSliderState = { urls: [], index: 0 };
+
+      function $(id) {
+        return document.getElementById(id);
+      }
+
+      var MULTIPLIERS = {
+        식당: 2.0,
+        카페: 1.8,
+        미용실: 1.5,
+        편의점: 2.5,
+        "마트·잡화": 2.0,
+        기타: 2.0,
+      };
+
+      function formatManWon(n) {
+        if (n == null || !isFinite(n)) return "—";
+        return Math.round(n).toLocaleString("ko-KR");
+      }
+
+      function parseOptionalInt(el) {
+        var v = el.value.trim();
+        if (v === "") return null;
+        var n = parseInt(v, 10);
+        return isNaN(n) || n < 0 ? null : n;
+      }
+
+      function normalizeValuationItem(it) {
+        if (!it) return null;
+        return {
+          category: it.category,
+          profitInputMode: it.profitInputMode || "monthly",
+          monthlyProfit: it.monthlyProfit,
+          sixMonthProfit: it.sixMonthProfit,
+          revenueTrend: it.revenueTrend || "stable",
+          ownerWorks: it.ownerWorks === true,
+          ownerWorkHours: it.ownerWorkHours,
+          seasonality: it.seasonality || "none",
+          leaseRenewal: it.leaseRenewal || "unknown",
+          deliveryRatio: it.deliveryRatio || "none",
+          staffCount: it.staffCount != null ? it.staffCount : 0,
+          staffStays: it.staffStays || "yes",
+          equipmentAge: it.equipmentAge || "mid",
+          liabilities: it.liabilities != null && isFinite(it.liabilities) ? Math.max(0, it.liabilities) : 0,
+          revenueVerifiable: it.revenueVerifiable !== false,
+        };
+      }
+
+      function getBaseMonthlyProfitFromItem(it) {
+        var n = normalizeValuationItem(it);
+        if (!n) return null;
+        var mode = n.profitInputMode;
+        if (mode === "sixMonth") {
+          var s = n.sixMonthProfit;
+          if (s == null || !isFinite(s) || s <= 0) return null;
+          return s / 6;
+        }
+        var m = n.monthlyProfit;
+        if (m == null || !isFinite(m) || m <= 0) return null;
+        return m;
+      }
+
+      function getAdjustedMonthlyProfitFromItem(it) {
+        var base = getBaseMonthlyProfitFromItem(it);
+        if (base == null || !isFinite(base)) return null;
+        var n = normalizeValuationItem(it);
+        var labor = 0;
+        if (n.ownerWorks === true) {
+          var h = n.ownerWorkHours;
+          if (h != null && isFinite(h) && h > 0) {
+            var hh = Math.min(16, Math.max(1, h));
+            labor = hh * 1.5 * 22;
+          }
+        }
+        var adj = base - labor;
+        if (adj <= 0 || !isFinite(adj)) return null;
+        return adj;
+      }
+
+      function computeValuationDetails(item) {
+        var n = normalizeValuationItem(item);
+        if (!n || !n.category) return null;
+        var baseMult = MULTIPLIERS[n.category];
+        if (baseMult == null) return null;
+        var baseMonthly = getBaseMonthlyProfitFromItem(item);
+        if (baseMonthly == null) return null;
+        var adjMonthly = getAdjustedMonthlyProfitFromItem(item);
+        if (adjMonthly == null) return null;
+        var ownerLabor = baseMonthly - adjMonthly;
+        var annual = adjMonthly * 12;
+
+        var trendMult = 1;
+        if (n.revenueTrend === "up") trendMult = 1.15;
+        else if (n.revenueTrend === "down") trendMult = 0.85;
+        var leaseMult = 1;
+        if (n.leaseRenewal === "uncertain") leaseMult = 0.9;
+        else if (n.leaseRenewal === "unknown") leaseMult = 0.95;
+        var delMult = 1;
+        if (n.deliveryRatio === "high") delMult = 0.85;
+        else if (n.deliveryRatio === "mid") delMult = 0.92;
+        else if (n.deliveryRatio === "low") delMult = 0.97;
+        var equipMult = 1;
+        if (n.equipmentAge === "new") equipMult = 1.05;
+        else if (n.equipmentAge === "old") equipMult = 0.9;
+        var verMult = n.revenueVerifiable ? 1.1 : 0.9;
+
+        var effectiveMult = baseMult * trendMult * leaseMult * delMult * equipMult * verMult;
+        var multipleGross = annual * effectiveMult;
+        var liabilities = n.liabilities || 0;
+        var multiplePrice = Math.max(0, multipleGross - liabilities);
+
+        var g = 0;
+        if (n.revenueTrend === "up") g = 0.03;
+        else if (n.revenueTrend === "down") g = -0.02;
+        var r = 0.15;
+        if (n.seasonality === "high") r += 0.02;
+        if (n.leaseRenewal === "uncertain") r += 0.02;
+        if (n.deliveryRatio === "high") r += 0.02;
+        if (n.staffStays === "uncertain") r += 0.01;
+        if (!n.revenueVerifiable) r += 0.02;
+        r = Math.min(0.25, r);
+
+        var pvCashFlows = 0;
+        for (var t = 1; t <= 5; t++) {
+          var cf = annual * Math.pow(1 + g, t);
+          pvCashFlows += cf / Math.pow(1 + r, t);
+        }
+        var cf5 = annual * Math.pow(1 + g, 5);
+        var terminalValue = 0;
+        if (r > g && r - g > 0.01) {
+          terminalValue = (cf5 * (1 + g)) / (r - g);
+        } else {
+          terminalValue = cf5 / r;
+        }
+        var pvTerminal = terminalValue / Math.pow(1 + r, 5);
+        var dcfGross = pvCashFlows + pvTerminal;
+        var dcfPrice = Math.max(0, dcfGross - liabilities);
+
+        var lines = [];
+        lines.push({ text: "업종 기본 배수 " + baseMult + "(「" + n.category + "」)", kind: "neutral" });
+        if (n.revenueTrend === "up") lines.push({ text: "매출 증가 추세 (+15%)", kind: "pos" });
+        else if (n.revenueTrend === "down") lines.push({ text: "매출 둔화 (-15%)", kind: "risk" });
+        if (n.leaseRenewal === "uncertain") lines.push({ text: "임대재계약 불확실 (-10%)", kind: "risk" });
+        else if (n.leaseRenewal === "unknown") lines.push({ text: "임대재계약 모름 (-5%)", kind: "risk" });
+        else lines.push({ text: "재계약 확실", kind: "posNavy" });
+        if (n.deliveryRatio === "high") lines.push({ text: "배달 비중 높음 (-15%)", kind: "risk" });
+        else if (n.deliveryRatio === "mid") lines.push({ text: "배달 비중 중간 (-8%)", kind: "risk" });
+        else if (n.deliveryRatio === "low") lines.push({ text: "배달 비중 낮음 (-3%)", kind: "neutral" });
+        else lines.push({ text: "배달 없음", kind: "posNavy" });
+        if (n.equipmentAge === "new") lines.push({ text: "설비·인테리어 신규 (+5%)", kind: "pos" });
+        else if (n.equipmentAge === "old") lines.push({ text: "설비·인테리어 노후 (-10%)", kind: "risk" });
+        if (n.revenueVerifiable) lines.push({ text: "매출 증빙 가능 (+10%)", kind: "pos" });
+        else lines.push({ text: "매출 증빙 어려움 (-10%)", kind: "risk" });
+        if (ownerLabor > 0) {
+          lines.push({
+            text: "사장님 직접 근무 조정 (월 -" + formatManWon(ownerLabor) + "만 원)",
+            kind: "neutral",
+          });
+        }
+
+        return {
+          annual: annual,
+          mult: effectiveMult,
+          baseMult: baseMult,
+          multiplePrice: multiplePrice,
+          multipleGross: multipleGross,
+          dcfPrice: dcfPrice,
+          dcfGross: dcfGross,
+          pvCashFlows: pvCashFlows,
+          terminalValue: terminalValue,
+          pvTerminal: pvTerminal,
+          discountRate: r,
+          growthRate: g,
+          liabilities: liabilities,
+          adjustedMonthlyProfit: adjMonthly,
+          baseMonthlyProfit: baseMonthly,
+          ownerLaborDeduction: ownerLabor,
+          adjustmentLines: lines,
+        };
+      }
+
+      function getConservativeValuation(item) {
+        var vd = computeValuationDetails(item);
+        if (!vd) return null;
+        return Math.min(vd.dcfPrice, vd.multiplePrice);
+      }
+
+      function buildValuationItemFromForm() {
+        var profitMode =
+          (document.querySelector('input[name="profitInputMode"]:checked') || {}).value || "monthly";
+        var monthlyProfitRaw = $("monthlyProfit") ? $("monthlyProfit").value.trim() : "";
+        var sixRaw = $("sixMonthProfit") ? $("sixMonthProfit").value.trim() : "";
+        var monthlyProfit = monthlyProfitRaw === "" ? null : parseFloat(monthlyProfitRaw);
+        var sixMonthProfit = sixRaw === "" ? null : parseFloat(sixRaw);
+        var ow =
+          (document.querySelector('input[name="ownerWorks"]:checked') || {}).value === "yes";
+        var ohRaw = $("ownerWorkHours") ? $("ownerWorkHours").value.trim() : "";
+        var ownerWorkHours = ohRaw === "" ? null : parseFloat(ohRaw);
+        var liabRaw = $("liabilities") ? $("liabilities").value.trim() : "";
+        var liabilities = liabRaw === "" ? 0 : parseFloat(liabRaw);
+        var staffRaw = $("staffCount") ? $("staffCount").value.trim() : "";
+        var staffCount = staffRaw === "" ? 0 : parseInt(staffRaw, 10);
+        return {
+          category: $("category") ? $("category").value : "",
+          profitInputMode: profitMode,
+          monthlyProfit: monthlyProfit,
+          sixMonthProfit: sixMonthProfit,
+          revenueTrend: (document.querySelector('input[name="revenueTrend"]:checked') || {}).value || "stable",
+          ownerWorks: ow,
+          ownerWorkHours: ownerWorkHours,
+          seasonality: (document.querySelector('input[name="seasonality"]:checked') || {}).value || "none",
+          leaseRenewal: (document.querySelector('input[name="leaseRenewal"]:checked') || {}).value || "unknown",
+          deliveryRatio: (document.querySelector('input[name="deliveryRatio"]:checked') || {}).value || "none",
+          staffCount: isNaN(staffCount) ? 0 : staffCount,
+          staffStays: (document.querySelector('input[name="staffStays"]:checked') || {}).value || "yes",
+          equipmentAge: (document.querySelector('input[name="equipmentAge"]:checked') || {}).value || "mid",
+          liabilities: isNaN(liabilities) || liabilities < 0 ? 0 : liabilities,
+          revenueVerifiable:
+            (document.querySelector('input[name="revenueVerifiable"]:checked') || {}).value !== "no",
+        };
+      }
+
+      function syncProfitInputModeUI() {
+        var m =
+          (document.querySelector('input[name="profitInputMode"]:checked') || {}).value || "monthly";
+        if ($("monthlyProfitWrap")) $("monthlyProfitWrap").hidden = m !== "monthly";
+        if ($("sixMonthProfitWrap")) $("sixMonthProfitWrap").hidden = m !== "sixMonth";
+      }
+
+      function syncOwnerWorksUI() {
+        var ow =
+          (document.querySelector('input[name="ownerWorks"]:checked') || {}).value === "yes";
+        if ($("ownerWorkHoursWrap")) $("ownerWorkHoursWrap").hidden = !ow;
+      }
+
+      function buildDetailValuationBadgesHtml(item) {
+        var n = normalizeValuationItem(item);
+        if (!n) return "";
+        var parts = [];
+        if (n.revenueTrend === "up") parts.push({ cls: "val-badge--pos", t: "매출 증가세" });
+        else if (n.revenueTrend === "down") parts.push({ cls: "val-badge--risk", t: "매출 둔화" });
+        else parts.push({ cls: "val-badge--pos-navy", t: "매출 안정" });
+        if (n.leaseRenewal === "certain") parts.push({ cls: "val-badge--pos-navy", t: "재계약 확실" });
+        else if (n.leaseRenewal === "uncertain") parts.push({ cls: "val-badge--risk", t: "재계약 불확실" });
+        else parts.push({ cls: "val-badge--pos-navy", t: "재계약 미확인" });
+        if (n.deliveryRatio === "none") parts.push({ cls: "val-badge--pos-navy", t: "배달 없음" });
+        else if (n.deliveryRatio === "high") parts.push({ cls: "val-badge--risk", t: "배달 비중 높음" });
+        else parts.push({ cls: "val-badge--pos-navy", t: "배달 비중 " + (n.deliveryRatio === "low" ? "낮음" : "중간") });
+        if (n.revenueVerifiable) parts.push({ cls: "val-badge--pos", t: "증빙 가능" });
+        else parts.push({ cls: "val-badge--risk", t: "증빙 어려움" });
+        if (n.seasonality === "high") parts.push({ cls: "val-badge--risk", t: "계절성 큼" });
+        var html = '<div class="detail-val-badges">';
+        for (var bi = 0; bi < parts.length; bi++) {
+          html +=
+            '<span class="val-badge ' +
+            parts[bi].cls +
+            '">' +
+            escapeHtml(parts[bi].t) +
+            "</span>";
+        }
+        html += "</div>";
+        return html;
+      }
+
+      function parseHopePriceToManWon(str) {
+        if (str == null) return null;
+        var s = String(str).trim();
+        if (!s) return null;
+        if (/협의|문의|별도|미정|가격\s*미정|연락|상담/i.test(s)) return null;
+
+        var norm = s.replace(/,/g, "").replace(/\s/g, "");
+        var total = 0;
+
+        norm = norm.replace(/(\d+(?:\.\d+)?)억/g, function (_, x) {
+          total += parseFloat(x) * 10000;
+          return "";
+        });
+        norm = norm.replace(/(\d+)천만/g, function (_, x) {
+          total += parseInt(x, 10) * 1000;
+          return "";
+        });
+        norm = norm.replace(/(\d+(?:\.\d+)?)만/g, function (_, x) {
+          total += parseFloat(x);
+          return "";
+        });
+
+        if (total > 0) return Math.round(total);
+
+        var nums = String(str).replace(/,/g, "").match(/\d+/g);
+        if (nums && nums.length) {
+          var n = parseInt(nums[0], 10);
+          if (isFinite(n) && n > 0) {
+            if (n >= 10000000) return Math.round(n / 10000);
+            return n;
+          }
+        }
+        return null;
+      }
+
+      var RECENT_SEARCHES_KEY = "gaegedang_recent_searches";
+      var FILTER_COLLAPSED_KEY = "gaegedang_filter_collapsed";
+      var recentSearchBlurTimer = null;
+      var recentSearchDebounceTimer = null;
+
+      function getSelectedCategoryFilter() {
+        var tabs = document.querySelectorAll("#filterCategoryTabs .filter-tab");
+        for (var i = 0; i < tabs.length; i++) {
+          if (tabs[i].classList.contains("is-active")) {
+            return tabs[i].getAttribute("data-category") || "";
+          }
+        }
+        return "";
+      }
+
+      function setCategoryTabActive(categoryValue) {
+        var tabs = document.querySelectorAll("#filterCategoryTabs .filter-tab");
+        for (var i = 0; i < tabs.length; i++) {
+          var tab = tabs[i];
+          var val = tab.getAttribute("data-category") || "";
+          var on = val === categoryValue;
+          tab.classList.toggle("is-active", on);
+          tab.setAttribute("aria-selected", on ? "true" : "false");
+        }
+      }
+
+      function setRegionTabActive(regionKey) {
+        var tabs = document.querySelectorAll("#filterRegionTabs .filter-tab");
+        for (var i = 0; i < tabs.length; i++) {
+          var tab = tabs[i];
+          var val = tab.getAttribute("data-region") || "";
+          var on = val === regionKey;
+          tab.classList.toggle("is-active", on);
+          tab.setAttribute("aria-selected", on ? "true" : "false");
+        }
+      }
+
+      function getSelectedRegionFilter() {
+        var tabs = document.querySelectorAll("#filterRegionTabs .filter-tab");
+        for (var i = 0; i < tabs.length; i++) {
+          if (tabs[i].classList.contains("is-active")) {
+            return tabs[i].getAttribute("data-region") || "";
+          }
+        }
+        return "";
+      }
+
+      function matchesRegionFilter(regionStr, regionKey) {
+        if (!regionKey) return true;
+        var r = (regionStr || "").trim();
+        if (regionKey === "other") {
+          return !/(서울|경기|인천|부산|대구)/.test(r);
+        }
+        var map = { seoul: "서울", gyeonggi: "경기", incheon: "인천", busan: "부산", daegu: "대구" };
+        var needle = map[regionKey];
+        return needle ? r.indexOf(needle) !== -1 : true;
+      }
+
+      function setPriceRangeTabActiveFromMinMax(minAttr, maxAttr) {
+        var tabs = document.querySelectorAll("#filterPriceRangeTabs .filter-tab");
+        for (var i = 0; i < tabs.length; i++) {
+          var tab = tabs[i];
+          var mn = tab.getAttribute("data-min") || "";
+          var mx = tab.getAttribute("data-max") || "";
+          var on = mn === (minAttr || "") && mx === (maxAttr || "");
+          tab.classList.toggle("is-active", on);
+          tab.setAttribute("aria-selected", on ? "true" : "false");
+        }
+      }
+
+      function getSelectedPriceRangeMinMax() {
+        var tabs = document.querySelectorAll("#filterPriceRangeTabs .filter-tab");
+        for (var i = 0; i < tabs.length; i++) {
+          if (!tabs[i].classList.contains("is-active")) continue;
+          var mn = tabs[i].getAttribute("data-min");
+          var mx = tabs[i].getAttribute("data-max");
+          var minP = mn === "" || mn == null ? null : parseInt(mn, 10);
+          var maxP = mx === "" || mx == null ? null : parseInt(mx, 10);
+          if (minP != null && isNaN(minP)) minP = null;
+          if (maxP != null && isNaN(maxP)) maxP = null;
+          return { minP: minP, maxP: maxP };
+        }
+        return { minP: null, maxP: null };
+      }
+
+      function setLeaseTabActive(leaseVal) {
+        var tabs = document.querySelectorAll("#filterLeaseTabs .filter-tab");
+        for (var i = 0; i < tabs.length; i++) {
+          var tab = tabs[i];
+          var val = tab.getAttribute("data-lease") || "";
+          var on = val === leaseVal;
+          tab.classList.toggle("is-active", on);
+          tab.setAttribute("aria-selected", on ? "true" : "false");
+        }
+      }
+
+      function getSelectedLeaseMinMonths() {
+        var tabs = document.querySelectorAll("#filterLeaseTabs .filter-tab");
+        for (var i = 0; i < tabs.length; i++) {
+          if (!tabs[i].classList.contains("is-active")) continue;
+          var v = tabs[i].getAttribute("data-lease") || "";
+          if (v === "") return null;
+          var n = parseInt(v, 10);
+          return isNaN(n) ? null : n;
+        }
+        return null;
+      }
+
+      function countAppliedFilters() {
+        var n = 0;
+        if (getSelectedCategoryFilter()) n++;
+        if (getSelectedRegionFilter()) n++;
+        var pr = getSelectedPriceRangeMinMax();
+        if (pr.minP != null || pr.maxP != null) n++;
+        if ($("filterOnlyAvailable") && $("filterOnlyAvailable").checked) n++;
+        if ($("filterUndervalued") && $("filterUndervalued").checked) n++;
+        if ($("filterHasPhotos") && $("filterHasPhotos").checked) n++;
+        if (getSelectedLeaseMinMonths() != null) n++;
+        return n;
+      }
+
+      function updateFilterActiveBadge() {
+        var badge = $("filterActiveBadge");
+        if (!badge) return;
+        var c = countAppliedFilters();
+        if (c > 0) {
+          badge.hidden = false;
+          badge.textContent = "필터 " + c + "개 적용 중";
+        } else {
+          badge.hidden = true;
+        }
+      }
+
+      function loadRecentSearches() {
+        try {
+          var raw = localStorage.getItem(RECENT_SEARCHES_KEY);
+          if (!raw) return [];
+          var a = JSON.parse(raw);
+          return Array.isArray(a) ? a : [];
+        } catch (eR) {
+          return [];
+        }
+      }
+
+      function saveRecentSearches(arr) {
+        try {
+          localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(arr.slice(0, 5)));
+        } catch (eS) {}
+      }
+
+      function addRecentSearchToStorage(q) {
+        var s = String(q || "").trim();
+        if (!s) return;
+        var list = loadRecentSearches();
+        var next = [s];
+        for (var i = 0; i < list.length; i++) {
+          if (list[i] !== s && next.length < 5) next.push(list[i]);
+        }
+        saveRecentSearches(next);
+      }
+
+      function removeRecentSearchAt(index) {
+        var list = loadRecentSearches();
+        if (index < 0 || index >= list.length) return;
+        list.splice(index, 1);
+        saveRecentSearches(list);
+        renderRecentSearchTags();
+      }
+
+      function clearRecentSearches() {
+        saveRecentSearches([]);
+        renderRecentSearchTags();
+      }
+
+      function renderRecentSearchTags() {
+        var wrap = $("recentSearchTags");
+        if (!wrap) return;
+        wrap.innerHTML = "";
+        var list = loadRecentSearches();
+        for (var i = 0; i < list.length; i++) {
+          (function (idx, text) {
+            var tag = document.createElement("span");
+            tag.className = "recent-search-tag";
+            var label = document.createElement("span");
+            label.textContent = text;
+            label.style.overflow = "hidden";
+            label.style.textOverflow = "ellipsis";
+            label.style.whiteSpace = "nowrap";
+            label.style.maxWidth = "10rem";
+            var rm = document.createElement("button");
+            rm.type = "button";
+            rm.className = "recent-search-tag-remove";
+            rm.setAttribute("aria-label", "삭제");
+            rm.textContent = "×";
+            rm.addEventListener("mousedown", function (e) {
+              e.preventDefault();
+              removeRecentSearchAt(idx);
+            });
+            tag.appendChild(label);
+            tag.appendChild(rm);
+            tag.addEventListener("mousedown", function (e) {
+              if (e.target === rm) return;
+              e.preventDefault();
+              if ($("filterSearch")) $("filterSearch").value = text;
+              addRecentSearchToStorage(text);
+              renderRecentSearchTags();
+              renderList();
+            });
+            wrap.appendChild(tag);
+          })(i, list[i]);
+        }
+      }
+
+      function applyFilterCollapseFromStorage() {
+        var el = $("listToolbarFilters");
+        var btn = $("filterCollapseToggle");
+        if (!el || !btn) return;
+        var collapsed = false;
+        try {
+          collapsed = localStorage.getItem(FILTER_COLLAPSED_KEY) === "1";
+        } catch (eC) {}
+        el.classList.toggle("is-collapsed", collapsed);
+        btn.setAttribute("aria-expanded", collapsed ? "false" : "true");
+        btn.textContent = collapsed ? "필터 열기 ▼" : "필터 접기 ▲";
+      }
+
+      function isListingNewForCard(item) {
+        if (!item || normalizeListingStatus(item) !== "available") return false;
+        var t = item.createdAt;
+        if (t == null || !isFinite(t)) return false;
+        return Date.now() - t <= 72 * 60 * 60 * 1000;
+      }
+
+      function getFilteredSortedListings(all) {
+        var q = ($("filterSearch") && $("filterSearch").value.trim().toLowerCase()) || "";
+        var cat = getSelectedCategoryFilter();
+        var regionKey = getSelectedRegionFilter();
+        var pr = getSelectedPriceRangeMinMax();
+        var minP = pr.minP;
+        var maxP = pr.maxP;
+        var useVal = $("filterUseValuation") && $("filterUseValuation").checked;
+        var onlyAvail = $("filterOnlyAvailable") && $("filterOnlyAvailable").checked;
+        var undervalued = $("filterUndervalued") && $("filterUndervalued").checked;
+        var photosOnly = $("filterHasPhotos") && $("filterHasPhotos").checked;
+        var leaseMin = getSelectedLeaseMinMonths();
+        var sortKey = ($("filterSort") && $("filterSort").value) || "newest";
+
+        var filtered = all.filter(function (item) {
+          if (q) {
+            var hay = ((item.storeName || "") + " " + (item.region || "")).toLowerCase();
+            if (hay.indexOf(q) === -1) return false;
+          }
+          if (cat && item.category !== cat) return false;
+          if (!matchesRegionFilter(item.region, regionKey)) return false;
+
+          if (minP != null || maxP != null) {
+            var num = useVal ? getConservativeValuation(item) : parseHopePriceToManWon(item.price);
+            if (num == null || !isFinite(num)) return false;
+            if (minP != null && num < minP) return false;
+            if (maxP != null && num > maxP) return false;
+          }
+
+          if (onlyAvail && normalizeListingStatus(item) === "sold") return false;
+
+          if (undervalued) {
+            var hope = parseHopePriceToManWon(item.price);
+            var cons = getConservativeValuation(item);
+            if (hope == null || !isFinite(hope) || cons == null || !isFinite(cons)) return false;
+            if (!(hope < cons)) return false;
+          }
+
+          if (photosOnly && getListingPhotos(item).length === 0) return false;
+
+          if (leaseMin != null) {
+            var lm = item.leaseRemainingMonths;
+            if (lm == null || !isFinite(lm) || lm < leaseMin) return false;
+          }
+
+          return true;
+        });
+
+        function sortVal(a, b, asc) {
+          var va = getConservativeValuation(a);
+          var vb = getConservativeValuation(b);
+          var aNull = va == null;
+          var bNull = vb == null;
+          if (aNull && bNull) return 0;
+          if (aNull) return 1;
+          if (bNull) return -1;
+          if (va === vb) return 0;
+          if (asc) return va < vb ? -1 : 1;
+          return va > vb ? -1 : 1;
+        }
+
+        if (sortKey === "valAsc") {
+          filtered.sort(function (a, b) {
+            var c = sortVal(a, b, true);
+            if (c !== 0) return c;
+            return (b.createdAt || 0) - (a.createdAt || 0);
+          });
+        } else if (sortKey === "valDesc") {
+          filtered.sort(function (a, b) {
+            var c = sortVal(a, b, false);
+            if (c !== 0) return c;
+            return (b.createdAt || 0) - (a.createdAt || 0);
+          });
+        } else {
+          filtered.sort(function (a, b) {
+            return (b.createdAt || 0) - (a.createdAt || 0);
+          });
+        }
+
+        return filtered;
+      }
+
+      function updateListingCount(n) {
+        var el = $("listingCount");
+        if (!el) return;
+        var span = el.querySelector("span");
+        if (span) span.textContent = String(n);
+      }
+
+      function resetAllFilters() {
+        if ($("filterSearch")) $("filterSearch").value = "";
+        setCategoryTabActive("");
+        setRegionTabActive("");
+        setPriceRangeTabActiveFromMinMax("", "");
+        if ($("filterUseValuation")) $("filterUseValuation").checked = false;
+        if ($("filterOnlyAvailable")) $("filterOnlyAvailable").checked = true;
+        if ($("filterUndervalued")) $("filterUndervalued").checked = false;
+        if ($("filterHasPhotos")) $("filterHasPhotos").checked = false;
+        setLeaseTabActive("");
+        if ($("filterSort")) $("filterSort").value = "newest";
+      }
+
+      function updateValuationUI() {
+        syncProfitInputModeUI();
+        syncOwnerWorksUI();
+        var tempItem = buildValuationItemFromForm();
+        var category = tempItem.category;
+        var placeholder = $("valuationPlaceholder");
+        var rangeEl = $("valuationRange");
+        var listEl = $("valuationBreakdown");
+
+        if (!category) {
+          placeholder.hidden = false;
+          rangeEl.hidden = true;
+          listEl.hidden = true;
+          placeholder.textContent = "업종을 선택하고 이익 정보를 입력하면 추정 범위가 표시됩니다.";
+          return;
+        }
+
+        var d = computeValuationDetails(tempItem);
+        if (!d) {
+          placeholder.hidden = false;
+          rangeEl.hidden = true;
+          listEl.hidden = true;
+          placeholder.textContent =
+            "이익 금액을 확인해 주세요. (직접 근무 시 인건비 조정 후 영업이익이 0보다 커야 합니다.)";
+          return;
+        }
+
+        var low = Math.min(d.dcfPrice, d.multiplePrice);
+        var high = Math.max(d.dcfPrice, d.multiplePrice);
+
+        placeholder.hidden = true;
+        rangeEl.hidden = false;
+        listEl.hidden = false;
+
+        rangeEl.innerHTML =
+          "보수적 추정: <span class=\"num\">" +
+          formatManWon(low) +
+          "</span>만 원 ~ 적정 추정: <span class=\"num\">" +
+          formatManWon(high) +
+          "</span>만 원";
+
+        var rev = parseOptionalInt($("monthlyRevenue"));
+        var keyInc = $("keyMoneyIncluded").checked;
+        var leaseM = parseOptionalInt($("leaseRemainingMonths"));
+
+        var refParts = [];
+        if (rev != null) refParts.push("월 평균 매출 " + formatManWon(rev) + "만 원");
+        refParts.push(keyInc ? "권리금 포함" : "권리금 미포함");
+        if (leaseM != null) refParts.push("임대 잔여 " + formatManWon(leaseM) + "개월");
+
+        var multLine =
+          "조정 월이익 " +
+          formatManWon(d.adjustedMonthlyProfit) +
+          "만 원 ×12 = 연 " +
+          formatManWon(d.annual) +
+          "만 원 × 조정 배수 " +
+          formatManWon(d.mult) +
+          " → Multiple 총액 " +
+          formatManWon(d.multipleGross) +
+          "만 원" +
+          (d.liabilities > 0 ? " − 부채 " + formatManWon(d.liabilities) + "만 원" : "") +
+          " = " +
+          formatManWon(d.multiplePrice) +
+          "만 원";
+
+        var dcfLine =
+          "성장률 " +
+          Math.round(d.growthRate * 1000) / 10 +
+          "%, 할인율 " +
+          Math.round(d.discountRate * 100) +
+          "% · 5년 현금흐름 PV " +
+          formatManWon(d.pvCashFlows) +
+          "만 원 + 잔존가치 PV " +
+          formatManWon(d.pvTerminal) +
+          "만 원" +
+          (d.liabilities > 0 ? " − 부채 " + formatManWon(d.liabilities) + "만 원" : "") +
+          " = " +
+          formatManWon(d.dcfPrice) +
+          "만 원";
+
+        var adjHtml = "";
+        for (var ai = 0; ai < d.adjustmentLines.length; ai++) {
+          adjHtml += "<li>· " + escapeHtml(d.adjustmentLines[ai].text) + "</li>";
+        }
+
+        listEl.innerHTML =
+          "<li><strong>Multiple 방식</strong>" +
+          escapeHtml(multLine) +
+          "</li>" +
+          "<li><strong>DCF 방식</strong>" +
+          escapeHtml(dcfLine) +
+          "</li>" +
+          "<li><strong>조정 요약</strong><ul class=\"valuation-adj-list\">" +
+          adjHtml +
+          "</ul></li>" +
+          "<li><strong>입력 참고</strong>" +
+          escapeHtml(refParts.join(" · ")) +
+          "</li>";
+
+        if (d.liabilities > 0) {
+          listEl.innerHTML +=
+            "<li><strong>부채 반영</strong>승계 부채·보증금 " +
+            formatManWon(d.liabilities) +
+            "만 원을 추정가에서 차감했습니다.</li>";
+        }
+      }
+
+      function loadListings() {
+        try {
+          var raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw && localStorage.getItem(STORAGE_KEY_LEGACY)) {
+            raw = localStorage.getItem(STORAGE_KEY_LEGACY);
+            localStorage.setItem(STORAGE_KEY, raw);
+          }
+          if (!raw) return [];
+          var parsed = JSON.parse(raw);
+          return Array.isArray(parsed) ? parsed : [];
+        } catch (e) {
+          return [];
+        }
+      }
+
+      function loadInterestCounts() {
+        try {
+          var raw = localStorage.getItem(INTEREST_COUNTS_KEY);
+          if (!raw) return {};
+          var o = JSON.parse(raw);
+          return o && typeof o === "object" && !Array.isArray(o) ? o : {};
+        } catch (e) {
+          return {};
+        }
+      }
+
+      function saveInterestCounts(obj) {
+        localStorage.setItem(INTEREST_COUNTS_KEY, JSON.stringify(obj));
+      }
+
+      function getInterestCount(listingId) {
+        var c = loadInterestCounts();
+        var n = c[listingId];
+        return typeof n === "number" && isFinite(n) && n >= 0 ? Math.floor(n) : 0;
+      }
+
+      function recordInterestSubmission(listingId) {
+        var c = loadInterestCounts();
+        c[listingId] = getInterestCount(listingId) + 1;
+        saveInterestCounts(c);
+      }
+
+      function updateDetailInterestRow(listingId) {
+        var btn = $("detailInterestBtn");
+        var countEl = $("detailInterestCount");
+        if (!btn || !countEl) return;
+        var n = getInterestCount(listingId);
+        countEl.textContent = "관심 " + n + "명";
+        btn.disabled = false;
+        btn.textContent = "관심 있어요";
+      }
+
+      function openInterestModal(listingId) {
+        var modal = $("interestModal");
+        if (!modal) return;
+        modal.dataset.listingId = listingId;
+        $("interestNdaAgree").checked = false;
+        $("interestBuyerName").value = "";
+        $("interestBuyerContact").value = "";
+        $("interestBuyerIntro").value = "";
+        $("interestBuyerBudget").value = "";
+        $("interestModalStepForm").hidden = false;
+        $("interestModalStepSuccess").hidden = true;
+        modal.hidden = false;
+        modal.setAttribute("aria-hidden", "false");
+        document.body.style.overflow = "hidden";
+        setTimeout(function () {
+          $("interestBuyerName").focus();
+        }, 0);
+      }
+
+      function closeInterestModal() {
+        var modal = $("interestModal");
+        if (!modal) return;
+        var lid = modal.dataset.listingId;
+        modal.hidden = true;
+        modal.setAttribute("aria-hidden", "true");
+        document.body.style.overflow = "";
+        delete modal.dataset.listingId;
+        $("interestModalStepForm").hidden = false;
+        $("interestModalStepSuccess").hidden = true;
+        if (lid) updateDetailInterestRow(lid);
+      }
+
+      function normalizeListingStatus(item) {
+        var s = item && item.status;
+        if (s === "negotiating" || s === "sold") return s;
+        return "available";
+      }
+
+      function applyDetailStatusUI(item) {
+        var st = normalizeListingStatus(item);
+        var row = $("detailStatusRow");
+        var badge = $("detailStatusBadge");
+        var notice = $("detailStatusNotice");
+        var interestBtn = $("detailInterestBtn");
+        if (!row || !badge || !notice) return;
+        if (st === "available") {
+          row.hidden = true;
+          notice.hidden = true;
+        } else {
+          row.hidden = false;
+          badge.textContent = st === "negotiating" ? "협의중" : "거래완료";
+          badge.className =
+            "listing-status-badge " +
+            (st === "negotiating" ? "listing-status-badge--negotiating" : "listing-status-badge--sold");
+          if (st === "negotiating") {
+            notice.hidden = false;
+            notice.textContent =
+              "현재 협의 중인 상태입니다. 추가 연락이 어려울 수 있습니다.";
+          } else {
+            notice.hidden = true;
+          }
+        }
+        if (interestBtn) interestBtn.hidden = st === "sold";
+      }
+
+      function setListingStatus(listingId, status) {
+        var list = loadListings();
+        for (var i = 0; i < list.length; i++) {
+          if (list[i].id !== listingId) continue;
+          if (status === "available") {
+            delete list[i].status;
+          } else {
+            list[i].status = status;
+          }
+          saveListings(list);
+          return true;
+        }
+        return false;
+      }
+
+      function syncStatusModalRadios(listingId) {
+        var item = findById(listingId);
+        var st = normalizeListingStatus(item);
+        if ($("statusChoiceAvailable")) $("statusChoiceAvailable").checked = st === "available";
+        if ($("statusChoiceNegotiating")) $("statusChoiceNegotiating").checked = st === "negotiating";
+        if ($("statusChoiceSold")) $("statusChoiceSold").checked = st === "sold";
+      }
+
+      function openStatusModal(listingId) {
+        var item = findById(listingId);
+        if (!item || item.deletePin == null || item.deletePin === "") return;
+        var modal = $("statusModal");
+        if (!modal) return;
+        modal.dataset.listingId = listingId;
+        if ($("statusPinInput")) $("statusPinInput").value = "";
+        $("statusModalStepPin").hidden = false;
+        $("statusModalStepForm").hidden = true;
+        modal.hidden = false;
+        modal.setAttribute("aria-hidden", "false");
+        document.body.style.overflow = "hidden";
+        setTimeout(function () {
+          if ($("statusPinInput")) $("statusPinInput").focus();
+        }, 0);
+      }
+
+      function closeStatusModal() {
+        var modal = $("statusModal");
+        if (!modal) return;
+        modal.hidden = true;
+        modal.setAttribute("aria-hidden", "true");
+        document.body.style.overflow = "";
+        delete modal.dataset.listingId;
+        if ($("statusPinInput")) $("statusPinInput").value = "";
+        $("statusModalStepPin").hidden = false;
+        $("statusModalStepForm").hidden = true;
+      }
+
+      function saveListings(list) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+      }
+
+      function deleteListingById(listingId) {
+        var listings = loadListings();
+        var next = [];
+        for (var di = 0; di < listings.length; di++) {
+          if (listings[di].id !== listingId) next.push(listings[di]);
+        }
+        saveListings(next);
+        var counts = loadInterestCounts();
+        if (counts && Object.prototype.hasOwnProperty.call(counts, listingId)) {
+          delete counts[listingId];
+          saveInterestCounts(counts);
+        }
+      }
+
+      function openDeleteModal() {
+        var vid = $("viewDetail") && $("viewDetail").dataset.currentId;
+        if (!vid) return;
+        var dItem = findById(vid);
+        if (!dItem || dItem.deletePin == null || dItem.deletePin === "") return;
+        var delModal = $("deleteModal");
+        if (!delModal) return;
+        delModal.dataset.listingId = vid;
+        if ($("deletePinInput")) $("deletePinInput").value = "";
+        delModal.hidden = false;
+        delModal.setAttribute("aria-hidden", "false");
+        document.body.style.overflow = "hidden";
+        setTimeout(function () {
+          if ($("deletePinInput")) $("deletePinInput").focus();
+        }, 0);
+      }
+
+      function closeDeleteModal() {
+        var delModal = $("deleteModal");
+        if (!delModal) return;
+        delModal.hidden = true;
+        delModal.setAttribute("aria-hidden", "true");
+        document.body.style.overflow = "";
+        delete delModal.dataset.listingId;
+        if ($("deletePinInput")) $("deletePinInput").value = "";
+      }
+
+      function confirmDeleteListing() {
+        var delModal = $("deleteModal");
+        if (!delModal || delModal.hidden) return;
+        var listingId = delModal.dataset.listingId;
+        if (!listingId) return;
+        var item = findById(listingId);
+        if (!item) {
+          closeDeleteModal();
+          renderList();
+          showView("list");
+          return;
+        }
+        var entered = $("deletePinInput") ? $("deletePinInput").value.trim() : "";
+        if (!/^\d{4}$/.test(entered)) {
+          alert("숫자 4자리를 입력해 주세요.");
+          return;
+        }
+        if (String(item.deletePin) !== entered) {
+          alert("비밀번호가 맞지 않습니다.");
+          return;
+        }
+        deleteListingById(listingId);
+        closeDeleteModal();
+        renderList();
+        showView("list");
+      }
+
+      function showView(name) {
+        var views = document.querySelectorAll(".view");
+        for (var i = 0; i < views.length; i++) {
+          views[i].classList.remove("active");
+        }
+        var headerEl = document.querySelector(".app-header");
+        if (headerEl) headerEl.classList.remove("header--transparent");
+        if (name === "home") {
+          if ($("viewHome")) $("viewHome").classList.add("active");
+          if (headerEl) headerEl.classList.add("header--transparent");
+        }
+        if (name === "list") $("viewList").classList.add("active");
+        if (name === "register") $("viewRegister").classList.add("active");
+        if (name === "detail") $("viewDetail").classList.add("active");
+        window.scrollTo(0, 0);
+      }
+
+      function goToListWithHomeSearch() {
+        var hi = $("homeSearchInput");
+        var q = hi && hi.value != null ? String(hi.value).trim() : "";
+        if ($("filterSearch")) $("filterSearch").value = q;
+        renderList();
+        showView("list");
+      }
+
+      function formatPriceDisplay(price) {
+        return price ? String(price) : "가격 미정";
+      }
+
+      function getListingPhotos(item) {
+        if (!item) return [];
+        if (Array.isArray(item.photos) && item.photos.length) {
+          var out = [];
+          for (var pi = 0; pi < item.photos.length; pi++) {
+            var u = item.photos[pi];
+            if (u == null) continue;
+            var t = String(u).trim();
+            if (t) out.push(t);
+          }
+          return out;
+        }
+        if (item.photo != null && String(item.photo).trim()) {
+          return [String(item.photo).trim()];
+        }
+        return [];
+      }
+
+      function getFirstListingPhotoUrl(item) {
+        var arr = getListingPhotos(item);
+        return arr.length ? arr[0] : "";
+      }
+
+      function resizeImageFileToJpegDataUrl(file, callback) {
+        var reader = new FileReader();
+        reader.onload = function (ev) {
+          var img = new Image();
+          img.onload = function () {
+            var w = img.naturalWidth;
+            var h = img.naturalHeight;
+            var maxW = 800;
+            var maxH = 600;
+            var scale = Math.min(maxW / w, maxH / h, 1);
+            var tw = Math.round(w * scale);
+            var th = Math.round(h * scale);
+            var canvas = document.createElement("canvas");
+            canvas.width = tw;
+            canvas.height = th;
+            var ctx = canvas.getContext("2d");
+            if (!ctx) {
+              callback(new Error("canvas"));
+              return;
+            }
+            ctx.drawImage(img, 0, 0, tw, th);
+            try {
+              callback(null, canvas.toDataURL("image/jpeg", 0.7));
+            } catch (err) {
+              callback(err);
+            }
+          };
+          img.onerror = function () {
+            callback(new Error("image"));
+          };
+          img.src = ev.target.result;
+        };
+        reader.onerror = function () {
+          callback(new Error("read"));
+        };
+        reader.readAsDataURL(file);
+      }
+
+      function clearRegisterPhotoPreview() {
+        pendingRegisterPhotos = [];
+        if ($("listingPhoto")) $("listingPhoto").value = "";
+        if ($("listingPhotoPreviewRow")) $("listingPhotoPreviewRow").innerHTML = "";
+      }
+
+      function renderRegisterPhotoPreviews() {
+        var row = $("listingPhotoPreviewRow");
+        if (!row) return;
+        row.innerHTML = "";
+        for (var ri = 0; ri < pendingRegisterPhotos.length; ri++) {
+          (function (idx) {
+            var thumb = document.createElement("div");
+            thumb.className = "listing-photo-thumb";
+            var im = document.createElement("img");
+            im.src = pendingRegisterPhotos[idx];
+            im.alt = "";
+            var rm = document.createElement("button");
+            rm.type = "button";
+            rm.className = "listing-photo-thumb-remove";
+            rm.setAttribute("aria-label", "이 사진 제거");
+            rm.textContent = "×";
+            rm.addEventListener("click", function () {
+              pendingRegisterPhotos.splice(idx, 1);
+              renderRegisterPhotoPreviews();
+            });
+            thumb.appendChild(im);
+            thumb.appendChild(rm);
+            row.appendChild(thumb);
+          })(ri);
+        }
+      }
+
+      function layoutDetailPhotoSlider() {
+        var vp = $("detailPhotoViewport");
+        var track = $("detailPhotoTrack");
+        if (!vp || !track) return;
+        var w = vp.offsetWidth;
+        if (!w) return;
+        var slides = track.querySelectorAll(".detail-photo-slide");
+        for (var si = 0; si < slides.length; si++) {
+          slides[si].style.width = w + "px";
+        }
+        track.style.width = slides.length * w + "px";
+        updateDetailPhotoSliderTransform();
+      }
+
+      function updateDetailPhotoSliderTransform() {
+        var vp = $("detailPhotoViewport");
+        var track = $("detailPhotoTrack");
+        if (!vp || !track) return;
+        var w = vp.offsetWidth;
+        if (!w) return;
+        var idx = detailPhotoSliderState.index;
+        track.style.transform = "translateX(-" + idx * w + "px)";
+      }
+
+      function updateDetailPhotoDots() {
+        var dots = $("detailPhotoDots");
+        if (!dots) return;
+        var children = dots.querySelectorAll(".detail-photo-dot");
+        for (var i = 0; i < children.length; i++) {
+          children[i].classList.toggle("is-active", i === detailPhotoSliderState.index);
+        }
+      }
+
+      function applyDetailPagePhotos(item) {
+        var wrap = $("detailPhotoWrap");
+        var single = $("detailPhotoSingle");
+        var slider = $("detailPhotoSlider");
+        var img = $("detailPhotoImg");
+        var track = $("detailPhotoTrack");
+        var dots = $("detailPhotoDots");
+        if (!wrap || !single || !slider || !img || !track || !dots) return;
+        var urls = getListingPhotos(item);
+        detailPhotoSliderState.urls = urls.slice();
+        detailPhotoSliderState.index = 0;
+
+        if (urls.length === 0) {
+          wrap.hidden = true;
+          single.hidden = true;
+          slider.hidden = true;
+          img.removeAttribute("src");
+          track.innerHTML = "";
+          dots.innerHTML = "";
+          return;
+        }
+
+        if (urls.length === 1) {
+          slider.hidden = true;
+          track.innerHTML = "";
+          dots.innerHTML = "";
+          single.hidden = false;
+          wrap.hidden = true;
+          img.onload = null;
+          img.onerror = null;
+          img.onload = function () {
+            wrap.hidden = false;
+            img.onload = null;
+          };
+          img.onerror = function () {
+            wrap.hidden = true;
+            single.hidden = true;
+            img.removeAttribute("src");
+          };
+          img.src = urls[0];
+          return;
+        }
+
+        single.hidden = true;
+        img.removeAttribute("src");
+        slider.hidden = false;
+        wrap.hidden = true;
+        track.innerHTML = "";
+        for (var si = 0; si < urls.length; si++) {
+          var slide = document.createElement("div");
+          slide.className = "detail-photo-slide";
+          var simg = document.createElement("img");
+          simg.src = urls[si];
+          simg.alt = "";
+          simg.decoding = "async";
+          slide.appendChild(simg);
+          track.appendChild(slide);
+        }
+        dots.innerHTML = "";
+        for (var di = 0; di < urls.length; di++) {
+          (function (didx) {
+            var dot = document.createElement("button");
+            dot.type = "button";
+            dot.className = "detail-photo-dot" + (didx === 0 ? " is-active" : "");
+            dot.setAttribute("aria-label", "사진 " + (didx + 1));
+            dot.addEventListener("click", function () {
+              detailPhotoSliderState.index = didx;
+              updateDetailPhotoSliderTransform();
+              updateDetailPhotoDots();
+            });
+            dots.appendChild(dot);
+          })(di);
+        }
+        requestAnimationFrame(function () {
+          layoutDetailPhotoSlider();
+          wrap.hidden = false;
+        });
+      }
+
+      function updateListingPhotos(listingId, photosArray) {
+        var list = loadListings();
+        for (var ui = 0; ui < list.length; ui++) {
+          if (list[ui].id !== listingId) continue;
+          delete list[ui].photo;
+          if (!photosArray || !photosArray.length) {
+            delete list[ui].photos;
+          } else {
+            list[ui].photos = photosArray.slice();
+          }
+          saveListings(list);
+          return true;
+        }
+        return false;
+      }
+
+      function resetPhotoEditModalStep2() {
+        photoEditDraftPhotos = [];
+        if ($("photoEditDraftRow")) $("photoEditDraftRow").innerHTML = "";
+        if ($("photoEditFile")) $("photoEditFile").value = "";
+        if ($("photoEditDeleteBtn")) $("photoEditDeleteBtn").hidden = true;
+      }
+
+      function renderPhotoEditDraftRow() {
+        var row = $("photoEditDraftRow");
+        if (!row) return;
+        row.innerHTML = "";
+        for (var ei = 0; ei < photoEditDraftPhotos.length; ei++) {
+          (function (idx) {
+            var thumb = document.createElement("div");
+            thumb.className = "listing-photo-thumb";
+            var im = document.createElement("img");
+            im.src = photoEditDraftPhotos[idx];
+            im.alt = "";
+            var rm = document.createElement("button");
+            rm.type = "button";
+            rm.className = "listing-photo-thumb-remove";
+            rm.setAttribute("aria-label", "이 사진 제거");
+            rm.textContent = "×";
+            rm.addEventListener("click", function () {
+              photoEditDraftPhotos.splice(idx, 1);
+              renderPhotoEditDraftRow();
+              if ($("photoEditDeleteBtn")) $("photoEditDeleteBtn").hidden = photoEditDraftPhotos.length === 0;
+            });
+            thumb.appendChild(im);
+            thumb.appendChild(rm);
+            row.appendChild(thumb);
+          })(ei);
+        }
+        if ($("photoEditDeleteBtn")) $("photoEditDeleteBtn").hidden = photoEditDraftPhotos.length === 0;
+      }
+
+      function syncPhotoEditModalDraft(listingId) {
+        var item = findById(listingId);
+        photoEditDraftPhotos = item ? getListingPhotos(item).slice() : [];
+        renderPhotoEditDraftRow();
+      }
+
+      function openPhotoEditModal(listingId) {
+        var item = findById(listingId);
+        if (!item || item.deletePin == null || item.deletePin === "") return;
+        var modal = $("photoEditModal");
+        if (!modal) return;
+        modal.dataset.listingId = listingId;
+        if ($("photoEditPinInput")) $("photoEditPinInput").value = "";
+        resetPhotoEditModalStep2();
+        $("photoEditModalStepPin").hidden = false;
+        $("photoEditModalStepForm").hidden = true;
+        modal.hidden = false;
+        modal.setAttribute("aria-hidden", "false");
+        document.body.style.overflow = "hidden";
+        setTimeout(function () {
+          if ($("photoEditPinInput")) $("photoEditPinInput").focus();
+        }, 0);
+      }
+
+      function closePhotoEditModal() {
+        var modal = $("photoEditModal");
+        if (!modal) return;
+        modal.hidden = true;
+        modal.setAttribute("aria-hidden", "true");
+        document.body.style.overflow = "";
+        delete modal.dataset.listingId;
+        if ($("photoEditPinInput")) $("photoEditPinInput").value = "";
+        $("photoEditModalStepPin").hidden = false;
+        $("photoEditModalStepForm").hidden = true;
+        resetPhotoEditModalStep2();
+      }
+
+      function migratePhotoToPhotosV2Once() {
+        try {
+          if (localStorage.getItem(PHOTOS_V2_MIGRATION_KEY)) return;
+          var list = loadListings();
+          var changed = false;
+          for (var vi = 0; vi < list.length; vi++) {
+            var row = list[vi];
+            if (!row) continue;
+            var legacy = row.photo != null && String(row.photo).trim();
+            var hasPhotos = Array.isArray(row.photos) && row.photos.length > 0;
+            if (legacy && !hasPhotos) {
+              row.photos = [String(row.photo).trim()];
+              delete row.photo;
+              changed = true;
+            }
+          }
+          if (changed) saveListings(list);
+          localStorage.setItem(PHOTOS_V2_MIGRATION_KEY, "1");
+        } catch (eV2) {}
+      }
+
+      function migrateSamplePhotosOnce() {
+        try {
+          if (localStorage.getItem(PHOTO_MIGRATION_KEY)) return;
+          var list = loadListings();
+          var changed = false;
+          for (var pi = 0; pi < list.length; pi++) {
+            var row = list[pi];
+            if (!row || row.isSample !== true) continue;
+            var hasP = Array.isArray(row.photos) && row.photos.length > 0;
+            if (hasP) continue;
+            var u = SAMPLE_PHOTOS_BY_CATEGORY[row.category] || SAMPLE_PHOTOS_BY_CATEGORY["기타"];
+            if (u) {
+              row.photos = [u];
+              delete row.photo;
+              changed = true;
+            }
+          }
+          if (changed) saveListings(list);
+          localStorage.setItem(PHOTO_MIGRATION_KEY, "1");
+        } catch (ePhoto) {}
+      }
+
+      function renderList() {
+        var container = $("cardContainer");
+        var all = loadListings();
+        var toolbar = $("listToolbar");
+        if (toolbar) toolbar.hidden = false;
+
+        var toShow = getFilteredSortedListings(all);
+        updateListingCount(toShow.length);
+        updateFilterActiveBadge();
+
+        container.innerHTML = "";
+
+        if (all.length === 0) {
+          if (toolbar) toolbar.hidden = true;
+          var emptyNew = document.createElement("div");
+          emptyNew.className = "empty-state";
+          emptyNew.style.gridColumn = "1 / -1";
+          emptyNew.innerHTML =
+            "<p>아직 등록된 매물이 없습니다.</p>" +
+            '<button type="button" class="btn btn-primary" id="emptyCta">첫 매물 등록하기</button>';
+          container.appendChild(emptyNew);
+          $("emptyCta").addEventListener("click", function () {
+            showView("register");
+            updateValuationUI();
+          });
+          updateListingCount(0);
+          return;
+        }
+
+        if (toShow.length === 0) {
+          var emptyFilter = document.createElement("div");
+          emptyFilter.className = "empty-state";
+          emptyFilter.style.gridColumn = "1 / -1";
+          emptyFilter.innerHTML =
+            "<p>조건에 맞는 매물이 없습니다.</p>" +
+            '<button type="button" class="btn btn-primary" id="emptyFilterReset">필터 초기화</button>';
+          container.appendChild(emptyFilter);
+          $("emptyFilterReset").addEventListener("click", function () {
+            resetAllFilters();
+            renderList();
+          });
+          return;
+        }
+
+        toShow.forEach(function (item) {
+          var st = normalizeListingStatus(item);
+          var corner =
+            st === "negotiating"
+              ? '<span class="card-status-corner listing-status-badge--negotiating">협의중</span>'
+              : st === "sold"
+                ? '<span class="card-status-corner listing-status-badge--sold">거래완료</span>'
+                : isListingNewForCard(item)
+                  ? '<span class="card-status-corner listing-card-new-badge">NEW</span>'
+                  : "";
+          var needStatusPadding = st !== "available" || isListingNewForCard(item);
+          var photoUrl = getFirstListingPhotoUrl(item);
+          var btn = document.createElement("button");
+          btn.type = "button";
+          btn.className =
+            "listing-card" +
+            (st === "sold" ? " listing-card--sold" : "") +
+            (needStatusPadding ? " listing-card--has-status" : "");
+          btn.setAttribute("data-id", item.id);
+          if (photoUrl) {
+            btn.classList.add("listing-card--has-photo");
+            var pwrap = document.createElement("div");
+            pwrap.className = "card-photo-wrap";
+            var pimg = document.createElement("img");
+            pimg.className = "card-photo-img";
+            pimg.alt = "";
+            pimg.loading = "lazy";
+            pimg.decoding = "async";
+            pimg.src = photoUrl;
+            pimg.addEventListener("error", function () {
+              pwrap.style.display = "none";
+              btn.classList.remove("listing-card--has-photo");
+            });
+            pwrap.appendChild(pimg);
+            btn.appendChild(pwrap);
+            var body = document.createElement("div");
+            body.className = "listing-card--body";
+            body.innerHTML =
+              corner +
+              '<p class="card-name"></p>' +
+              '<div class="card-meta"></div>' +
+              '<div class="card-price"></div>' +
+              '<p class="card-interest-count" hidden></p>';
+            btn.appendChild(body);
+            body.querySelector(".card-name").textContent = item.storeName;
+            body.querySelector(".card-meta").innerHTML =
+              "<span>" +
+              escapeHtml(item.category) +
+              "</span><span>" +
+              escapeHtml(item.region) +
+              "</span>";
+            body.querySelector(".card-price").textContent = formatPriceDisplay(item.price);
+            var ic1 = getInterestCount(item.id);
+            var interestLine1 = body.querySelector(".card-interest-count");
+            if (ic1 >= 1) {
+              interestLine1.hidden = false;
+              interestLine1.textContent = "관심 " + ic1 + "명";
+            }
+          } else {
+            btn.innerHTML =
+              corner +
+              '<p class="card-name"></p>' +
+              '<div class="card-meta"></div>' +
+              '<div class="card-price"></div>' +
+              '<p class="card-interest-count" hidden></p>';
+            btn.querySelector(".card-name").textContent = item.storeName;
+            btn.querySelector(".card-meta").innerHTML =
+              "<span>" +
+              escapeHtml(item.category) +
+              "</span><span>" +
+              escapeHtml(item.region) +
+              "</span>";
+            btn.querySelector(".card-price").textContent = formatPriceDisplay(item.price);
+            var ic2 = getInterestCount(item.id);
+            var interestLine2 = btn.querySelector(".card-interest-count");
+            if (ic2 >= 1) {
+              interestLine2.hidden = false;
+              interestLine2.textContent = "관심 " + ic2 + "명";
+            }
+          }
+          btn.addEventListener("click", function () {
+            openDetail(item.id);
+          });
+          container.appendChild(btn);
+        });
+      }
+
+      function escapeHtml(str) {
+        if (str == null) return "";
+        var div = document.createElement("div");
+        div.textContent = str;
+        return div.innerHTML;
+      }
+
+      function findById(id) {
+        var listings = loadListings();
+        for (var i = 0; i < listings.length; i++) {
+          if (listings[i].id === id) return listings[i];
+        }
+        return null;
+      }
+
+      function openDetail(id) {
+        var item = findById(id);
+        if (!item) {
+          showView("list");
+          renderList();
+          return;
+        }
+        applyDetailPagePhotos(item);
+        $("detailTitle").textContent = item.storeName;
+        $("detailChips").innerHTML =
+          '<span class="chip">' +
+          escapeHtml(item.category) +
+          '</span><span class="chip">' +
+          escapeHtml(item.region) +
+          "</span>";
+        $("detailPrice").textContent = formatPriceDisplay(item.price);
+
+        var valWrap = $("detailValuationWrap");
+        var vdDetail = item.category && MULTIPLIERS[item.category] != null ? computeValuationDetails(item) : null;
+        if (vdDetail) {
+          var vLow = Math.min(vdDetail.dcfPrice, vdDetail.multiplePrice);
+          var vHigh = Math.max(vdDetail.dcfPrice, vdDetail.multiplePrice);
+          var refBits = [];
+          if (item.monthlyRevenue != null && item.monthlyRevenue >= 0) {
+            refBits.push("월 평균 매출 " + formatManWon(item.monthlyRevenue) + "만 원");
+          }
+          refBits.push(item.keyMoneyIncluded ? "권리금 포함" : "권리금 미포함");
+          if (item.leaseRemainingMonths != null && item.leaseRemainingMonths >= 0) {
+            refBits.push("임대 잔여 " + formatManWon(item.leaseRemainingMonths) + "개월");
+          }
+          var adjHtmlD = "";
+          for (var ai2 = 0; ai2 < vdDetail.adjustmentLines.length; ai2++) {
+            adjHtmlD += "<li>· " + escapeHtml(vdDetail.adjustmentLines[ai2].text) + "</li>";
+          }
+          var netLine =
+            vdDetail.liabilities > 0
+              ? '<p class="val-net-debt-line">승계 부채·보증금 ' +
+                formatManWon(vdDetail.liabilities) +
+                "만 원을 반영한 순추정가는 " +
+                formatManWon(vLow) +
+                "만 원 ~ " +
+                formatManWon(vHigh) +
+                "만 원입니다.</p>"
+              : "";
+          valWrap.innerHTML =
+            "<h2>등록 시 가치 추정 (참고)</h2>" +
+            buildDetailValuationBadgesHtml(item) +
+            '<p class="val-range-line">보수적 추정: <span class="num">' +
+            formatManWon(vLow) +
+            '</span>만 원 ~ 적정 추정: <span class="num">' +
+            formatManWon(vHigh) +
+            "</span>만 원</p>" +
+            netLine +
+            "<p class=\"val-meta\">" +
+            "Multiple " +
+            formatManWon(vdDetail.multiplePrice) +
+            "만 원 · DCF " +
+            formatManWon(vdDetail.dcfPrice) +
+            "만 원<br />" +
+            escapeHtml(refBits.join(" · ")) +
+            "</p>" +
+            '<ul class="valuation-breakdown" style="margin-top:0.75rem;padding:0;list-style:none">' +
+            "<li><strong>조정 요약</strong><ul class=\"valuation-adj-list\">" +
+            adjHtmlD +
+            "</ul></li></ul>";
+          valWrap.hidden = false;
+        } else {
+          valWrap.innerHTML = "";
+          valWrap.hidden = true;
+        }
+
+        var desc = (item.description || "").trim();
+        $("detailDescription").textContent = desc || "등록된 상세 설명이 없습니다.";
+        var contact = (item.contact || "").trim();
+        var wrap = $("detailContactWrap");
+        if (contact) {
+          wrap.hidden = false;
+          $("detailContact").textContent = contact;
+        } else {
+          wrap.hidden = true;
+        }
+        var delWrap = $("detailDeleteWrap");
+        if (delWrap) {
+          var hasPin =
+            item.deletePin != null &&
+            item.deletePin !== "" &&
+            String(item.deletePin).length > 0;
+          delWrap.hidden = !hasPin;
+        }
+        $("viewDetail").dataset.currentId = id;
+        updateDetailInterestRow(id);
+        applyDetailStatusUI(item);
+        showView("detail");
+      }
+
+      function uuid() {
+        if (typeof crypto !== "undefined" && crypto.randomUUID) {
+          return crypto.randomUUID();
+        }
+        return "id-" + Date.now() + "-" + Math.random().toString(36).slice(2, 9);
+      }
+
+      $("registerForm").addEventListener("submit", function (e) {
+        e.preventDefault();
+        var storeName = $("storeName").value.trim();
+        var category = $("category").value;
+        var region = $("region").value.trim();
+        var price = $("price").value.trim();
+        var description = $("description").value.trim();
+        var contact = $("contact").value.trim();
+
+        var monthlyRevenue = parseOptionalInt($("monthlyRevenue"));
+        var vForm = buildValuationItemFromForm();
+        var monthlyProfit = vForm.monthlyProfit;
+        if (monthlyProfit != null && (isNaN(monthlyProfit) || monthlyProfit < 0)) {
+          monthlyProfit = null;
+        }
+        var sixMonthProfit = vForm.sixMonthProfit;
+        if (sixMonthProfit != null && (isNaN(sixMonthProfit) || sixMonthProfit < 0)) {
+          sixMonthProfit = null;
+        }
+        var keyMoneyIncluded = $("keyMoneyIncluded").checked;
+        var leaseRemainingMonths = parseOptionalInt($("leaseRemainingMonths"));
+
+        if (!storeName || !category || !region || !price) {
+          alert("가게 이름, 업종, 지역, 희망 가격은 필수입니다.");
+          return;
+        }
+
+        var pinRaw = $("listingDeletePin") ? $("listingDeletePin").value.trim() : "";
+        if (pinRaw !== "" && !/^\d{4}$/.test(pinRaw)) {
+          alert("삭제 비밀번호는 숫자 4자리만 입력하거나 비워 두세요.");
+          return;
+        }
+
+        var listings = loadListings();
+        var newItem = {
+          id: uuid(),
+          storeName: storeName,
+          category: category,
+          region: region,
+          price: price,
+          description: description,
+          contact: contact,
+          monthlyRevenue: monthlyRevenue,
+          monthlyProfit: monthlyProfit,
+          profitInputMode: vForm.profitInputMode,
+          sixMonthProfit: sixMonthProfit,
+          revenueTrend: vForm.revenueTrend,
+          ownerWorks: vForm.ownerWorks,
+          ownerWorkHours: vForm.ownerWorkHours,
+          seasonality: vForm.seasonality,
+          leaseRenewal: vForm.leaseRenewal,
+          deliveryRatio: vForm.deliveryRatio,
+          staffCount: vForm.staffCount,
+          staffStays: vForm.staffStays,
+          equipmentAge: vForm.equipmentAge,
+          liabilities: vForm.liabilities,
+          revenueVerifiable: vForm.revenueVerifiable,
+          keyMoneyIncluded: keyMoneyIncluded,
+          leaseRemainingMonths: leaseRemainingMonths,
+          createdAt: Date.now(),
+        };
+        if (pinRaw !== "") {
+          newItem.deletePin = pinRaw;
+        }
+        if (pendingRegisterPhotos.length > 0) {
+          newItem.photos = pendingRegisterPhotos.slice();
+        }
+        listings.push(newItem);
+        saveListings(listings);
+        $("registerForm").reset();
+        clearRegisterPhotoPreview();
+        updateValuationUI();
+        renderList();
+        showView("list");
+      });
+
+      $("cancelRegister").addEventListener("click", function () {
+        $("registerForm").reset();
+        clearRegisterPhotoPreview();
+        updateValuationUI();
+        showView("list");
+      });
+
+      function processRegisterFilesFromIndex(files, startIdx) {
+        if (!files || startIdx >= files.length) return;
+        if (pendingRegisterPhotos.length >= MAX_LISTING_PHOTOS) return;
+        var f = files[startIdx];
+        if (!f || !/^image\//.test(f.type)) {
+          processRegisterFilesFromIndex(files, startIdx + 1);
+          return;
+        }
+        resizeImageFileToJpegDataUrl(f, function (err, dataUrl) {
+          if (!err && dataUrl && pendingRegisterPhotos.length < MAX_LISTING_PHOTOS) {
+            pendingRegisterPhotos.push(dataUrl);
+            renderRegisterPhotoPreviews();
+          }
+          processRegisterFilesFromIndex(files, startIdx + 1);
+        });
+      }
+
+      if ($("listingPhoto")) {
+        $("listingPhoto").addEventListener("change", function () {
+          var input = $("listingPhoto");
+          var files = input && input.files;
+          if (!files || !files.length) return;
+          processRegisterFilesFromIndex(files, 0);
+          if (input) input.value = "";
+        });
+      }
+
+      $("navHome").addEventListener("click", function () {
+        showView("home");
+      });
+      $("navList").addEventListener("click", function () {
+        renderList();
+        showView("list");
+      });
+
+      var homeSearchBtn = $("homeSearchBtn");
+      var homeSearchInput = $("homeSearchInput");
+      if (homeSearchBtn && homeSearchInput) {
+        homeSearchBtn.addEventListener("click", function () {
+          goToListWithHomeSearch();
+        });
+        homeSearchInput.addEventListener("keydown", function (e) {
+          if (e.key !== "Enter") return;
+          e.preventDefault();
+          goToListWithHomeSearch();
+        });
+      }
+
+      var viewHomeEl = $("viewHome");
+      if (viewHomeEl) {
+        viewHomeEl.addEventListener("click", function (e) {
+          var tag = e.target && e.target.closest && e.target.closest(".home-quick-tag");
+          if (!tag || !viewHomeEl.contains(tag)) return;
+          var cat = tag.getAttribute("data-home-category") || "";
+          setCategoryTabActive(cat);
+          renderList();
+          showView("list");
+        });
+      }
+
+      var homeCtaList = $("homeCtaList");
+      if (homeCtaList) {
+        homeCtaList.addEventListener("click", function () {
+          renderList();
+          showView("list");
+        });
+      }
+      var homeCtaRegister = $("homeCtaRegister");
+      if (homeCtaRegister) {
+        homeCtaRegister.addEventListener("click", function () {
+          showView("register");
+          updateValuationUI();
+        });
+      }
+      $("navRegister").addEventListener("click", function () {
+        showView("register");
+        updateValuationUI();
+      });
+
+      var registerFormEl = $("registerForm");
+      if (registerFormEl) {
+        registerFormEl.addEventListener("input", updateValuationUI);
+        registerFormEl.addEventListener("change", updateValuationUI);
+      }
+
+      $("detailBack").addEventListener("click", function () {
+        renderList();
+        showView("list");
+      });
+
+      var filterTabsEl = $("filterCategoryTabs");
+      if (filterTabsEl) {
+        filterTabsEl.addEventListener("click", function (e) {
+          var t = e.target;
+          if (!t || !t.closest) return;
+          var tab = t.closest(".filter-tab");
+          if (!tab || !filterTabsEl.contains(tab)) return;
+          var cat = tab.getAttribute("data-category") || "";
+          setCategoryTabActive(cat);
+          renderList();
+        });
+      }
+
+      var filterSearchEl = $("filterSearch");
+      if (filterSearchEl) {
+        filterSearchEl.addEventListener("input", function () {
+          renderList();
+          clearTimeout(recentSearchDebounceTimer);
+          recentSearchDebounceTimer = setTimeout(function () {
+            var qq = filterSearchEl.value.trim();
+            if (qq) addRecentSearchToStorage(qq);
+          }, 500);
+        });
+        filterSearchEl.addEventListener("keydown", function (e) {
+          if (e.key !== "Enter") return;
+          e.preventDefault();
+          var qq = filterSearchEl.value.trim();
+          if (qq) addRecentSearchToStorage(qq);
+          renderList();
+        });
+        filterSearchEl.addEventListener("focus", function () {
+          clearTimeout(recentSearchBlurTimer);
+          renderRecentSearchTags();
+          if ($("recentSearchWrap")) $("recentSearchWrap").hidden = false;
+        });
+        filterSearchEl.addEventListener("blur", function () {
+          clearTimeout(recentSearchBlurTimer);
+          recentSearchBlurTimer = setTimeout(function () {
+            if ($("recentSearchWrap")) $("recentSearchWrap").hidden = true;
+          }, 200);
+        });
+      }
+      if ($("recentSearchClearAll")) {
+        $("recentSearchClearAll").addEventListener("click", function () {
+          clearRecentSearches();
+        });
+      }
+
+      var filterRegionTabsEl = $("filterRegionTabs");
+      if (filterRegionTabsEl) {
+        filterRegionTabsEl.addEventListener("click", function (e) {
+          var tab = e.target && e.target.closest && e.target.closest(".filter-tab");
+          if (!tab || !filterRegionTabsEl.contains(tab)) return;
+          setRegionTabActive(tab.getAttribute("data-region") || "");
+          renderList();
+        });
+      }
+
+      var filterPriceRangeTabsEl = $("filterPriceRangeTabs");
+      if (filterPriceRangeTabsEl) {
+        filterPriceRangeTabsEl.addEventListener("click", function (e) {
+          var tab = e.target && e.target.closest && e.target.closest(".filter-tab");
+          if (!tab || !filterPriceRangeTabsEl.contains(tab)) return;
+          var mn = tab.getAttribute("data-min") || "";
+          var mx = tab.getAttribute("data-max") || "";
+          setPriceRangeTabActiveFromMinMax(mn, mx);
+          renderList();
+        });
+      }
+
+      var filterLeaseTabsEl = $("filterLeaseTabs");
+      if (filterLeaseTabsEl) {
+        filterLeaseTabsEl.addEventListener("click", function (e) {
+          var tab = e.target && e.target.closest && e.target.closest(".filter-tab");
+          if (!tab || !filterLeaseTabsEl.contains(tab)) return;
+          setLeaseTabActive(tab.getAttribute("data-lease") || "");
+          renderList();
+        });
+      }
+
+      if ($("filterUseValuation")) $("filterUseValuation").addEventListener("change", renderList);
+      if ($("filterOnlyAvailable")) $("filterOnlyAvailable").addEventListener("change", renderList);
+      if ($("filterUndervalued")) $("filterUndervalued").addEventListener("change", renderList);
+      if ($("filterHasPhotos")) $("filterHasPhotos").addEventListener("change", renderList);
+      if ($("filterSort")) $("filterSort").addEventListener("change", renderList);
+
+      var filterCollapseToggleEl = $("filterCollapseToggle");
+      if (filterCollapseToggleEl && $("listToolbarFilters")) {
+        filterCollapseToggleEl.addEventListener("click", function () {
+          var el = $("listToolbarFilters");
+          if (!el) return;
+          var nextCollapsed = !el.classList.contains("is-collapsed");
+          el.classList.toggle("is-collapsed", nextCollapsed);
+          try {
+            localStorage.setItem(FILTER_COLLAPSED_KEY, nextCollapsed ? "1" : "");
+          } catch (eF) {}
+          filterCollapseToggleEl.setAttribute("aria-expanded", nextCollapsed ? "false" : "true");
+          filterCollapseToggleEl.textContent = nextCollapsed ? "필터 열기 ▼" : "필터 접기 ▲";
+        });
+      }
+
+      if ($("filterReset")) {
+        $("filterReset").addEventListener("click", function () {
+          resetAllFilters();
+          renderList();
+        });
+      }
+
+      if ($("detailInterestBtn")) {
+        $("detailInterestBtn").addEventListener("click", function () {
+          var id = $("viewDetail") && $("viewDetail").dataset.currentId;
+          if (!id) return;
+          var cur = findById(id);
+          if (cur && normalizeListingStatus(cur) === "sold") return;
+          openInterestModal(id);
+        });
+      }
+
+      if ($("detailStatusBtn")) {
+        $("detailStatusBtn").addEventListener("click", function () {
+          var id = $("viewDetail") && $("viewDetail").dataset.currentId;
+          if (!id) return;
+          openStatusModal(id);
+        });
+      }
+
+      if ($("detailPhotoEditBtn")) {
+        $("detailPhotoEditBtn").addEventListener("click", function () {
+          var id = $("viewDetail") && $("viewDetail").dataset.currentId;
+          if (!id) return;
+          openPhotoEditModal(id);
+        });
+      }
+
+      if ($("detailDeleteBtn")) {
+        $("detailDeleteBtn").addEventListener("click", function () {
+          openDeleteModal();
+        });
+      }
+      if ($("deleteCancelBtn")) $("deleteCancelBtn").addEventListener("click", closeDeleteModal);
+      if ($("deleteModalBackdrop")) $("deleteModalBackdrop").addEventListener("click", closeDeleteModal);
+      if ($("deleteConfirmBtn")) $("deleteConfirmBtn").addEventListener("click", confirmDeleteListing);
+
+      if ($("statusPinNextBtn")) {
+        $("statusPinNextBtn").addEventListener("click", function () {
+          var modal = $("statusModal");
+          if (!modal || modal.hidden) return;
+          var listingId = modal.dataset.listingId;
+          if (!listingId) return;
+          var item = findById(listingId);
+          if (!item) return;
+          var entered = $("statusPinInput") ? $("statusPinInput").value.trim() : "";
+          if (!/^\d{4}$/.test(entered)) {
+            alert("숫자 4자리를 입력해 주세요.");
+            return;
+          }
+          if (String(item.deletePin) !== entered) {
+            alert("비밀번호가 맞지 않습니다.");
+            return;
+          }
+          syncStatusModalRadios(listingId);
+          $("statusModalStepPin").hidden = true;
+          $("statusModalStepForm").hidden = false;
+        });
+      }
+      if ($("statusSaveBtn")) {
+        $("statusSaveBtn").addEventListener("click", function () {
+          var modal = $("statusModal");
+          if (!modal || modal.hidden) return;
+          var listingId = modal.dataset.listingId;
+          if (!listingId) return;
+          var picked = document.querySelector('input[name="listingStatusChoice"]:checked');
+          if (!picked) {
+            alert("상태를 선택해 주세요.");
+            return;
+          }
+          var val = picked.value;
+          if (val !== "available" && val !== "negotiating" && val !== "sold") return;
+          setListingStatus(listingId, val);
+          closeStatusModal();
+          renderList();
+          if ($("viewDetail") && $("viewDetail").dataset.currentId === listingId) {
+            var fresh = findById(listingId);
+            if (fresh) {
+              applyDetailStatusUI(fresh);
+              updateDetailInterestRow(listingId);
+            }
+          }
+        });
+      }
+      if ($("statusModalCancelBtn")) $("statusModalCancelBtn").addEventListener("click", closeStatusModal);
+      if ($("statusFormCancelBtn")) $("statusFormCancelBtn").addEventListener("click", closeStatusModal);
+      if ($("statusModalBackdrop")) $("statusModalBackdrop").addEventListener("click", closeStatusModal);
+
+      if ($("photoEditPinNextBtn")) {
+        $("photoEditPinNextBtn").addEventListener("click", function () {
+          var modal = $("photoEditModal");
+          if (!modal || modal.hidden) return;
+          var listingId = modal.dataset.listingId;
+          if (!listingId) return;
+          var item = findById(listingId);
+          if (!item) return;
+          var entered = $("photoEditPinInput") ? $("photoEditPinInput").value.trim() : "";
+          if (!/^\d{4}$/.test(entered)) {
+            alert("숫자 4자리를 입력해 주세요.");
+            return;
+          }
+          if (String(item.deletePin) !== entered) {
+            alert("비밀번호가 맞지 않습니다.");
+            return;
+          }
+          if ($("photoEditFile")) $("photoEditFile").value = "";
+          syncPhotoEditModalDraft(listingId);
+          $("photoEditModalStepPin").hidden = true;
+          $("photoEditModalStepForm").hidden = false;
+        });
+      }
+      if ($("photoEditSaveBtn")) {
+        $("photoEditSaveBtn").addEventListener("click", function () {
+          var modal = $("photoEditModal");
+          if (!modal || modal.hidden) return;
+          var listingId = modal.dataset.listingId;
+          if (!listingId) return;
+          updateListingPhotos(listingId, photoEditDraftPhotos.slice());
+          closePhotoEditModal();
+          renderList();
+          if ($("viewDetail") && $("viewDetail").dataset.currentId === listingId) {
+            var fresh = findById(listingId);
+            if (fresh) applyDetailPagePhotos(fresh);
+          }
+        });
+      }
+      if ($("photoEditDeleteBtn")) {
+        $("photoEditDeleteBtn").addEventListener("click", function () {
+          var modal = $("photoEditModal");
+          if (!modal || modal.hidden) return;
+          var listingId = modal.dataset.listingId;
+          if (!listingId) return;
+          updateListingPhotos(listingId, []);
+          closePhotoEditModal();
+          renderList();
+          if ($("viewDetail") && $("viewDetail").dataset.currentId === listingId) {
+            var fresh = findById(listingId);
+            if (fresh) applyDetailPagePhotos(fresh);
+          }
+        });
+      }
+      if ($("photoEditModalCancelBtn")) $("photoEditModalCancelBtn").addEventListener("click", closePhotoEditModal);
+      if ($("photoEditFormCancelBtn")) $("photoEditFormCancelBtn").addEventListener("click", closePhotoEditModal);
+      if ($("photoEditModalBackdrop")) $("photoEditModalBackdrop").addEventListener("click", closePhotoEditModal);
+
+      function processPhotoEditFilesFromIndex(files, startIdx) {
+        if (!files || startIdx >= files.length) return;
+        if (photoEditDraftPhotos.length >= MAX_LISTING_PHOTOS) return;
+        var f = files[startIdx];
+        if (!f || !/^image\//.test(f.type)) {
+          processPhotoEditFilesFromIndex(files, startIdx + 1);
+          return;
+        }
+        resizeImageFileToJpegDataUrl(f, function (err, dataUrl) {
+          if (!err && dataUrl && photoEditDraftPhotos.length < MAX_LISTING_PHOTOS) {
+            photoEditDraftPhotos.push(dataUrl);
+            renderPhotoEditDraftRow();
+          }
+          processPhotoEditFilesFromIndex(files, startIdx + 1);
+        });
+      }
+
+      if ($("photoEditFile")) {
+        $("photoEditFile").addEventListener("change", function () {
+          var input = $("photoEditFile");
+          var files = input && input.files;
+          if (!files || !files.length) return;
+          processPhotoEditFilesFromIndex(files, 0);
+          if (input) input.value = "";
+        });
+      }
+
+      if ($("detailPhotoPrev")) {
+        $("detailPhotoPrev").addEventListener("click", function () {
+          var n = detailPhotoSliderState.urls.length;
+          if (n <= 1) return;
+          detailPhotoSliderState.index = (detailPhotoSliderState.index - 1 + n) % n;
+          updateDetailPhotoSliderTransform();
+          updateDetailPhotoDots();
+        });
+      }
+      if ($("detailPhotoNext")) {
+        $("detailPhotoNext").addEventListener("click", function () {
+          var n = detailPhotoSliderState.urls.length;
+          if (n <= 1) return;
+          detailPhotoSliderState.index = (detailPhotoSliderState.index + 1) % n;
+          updateDetailPhotoSliderTransform();
+          updateDetailPhotoDots();
+        });
+      }
+
+      window.addEventListener("resize", function () {
+        if ($("detailPhotoSlider") && !$("detailPhotoSlider").hidden) {
+          layoutDetailPhotoSlider();
+        }
+      });
+
+      if ($("interestCancelBtn")) {
+        $("interestCancelBtn").addEventListener("click", closeInterestModal);
+      }
+      if ($("interestModalBackdrop")) {
+        $("interestModalBackdrop").addEventListener("click", closeInterestModal);
+      }
+      if ($("interestSuccessBtn")) {
+        $("interestSuccessBtn").addEventListener("click", closeInterestModal);
+      }
+
+      if ($("interestSubmitBtn")) {
+        $("interestSubmitBtn").addEventListener("click", function () {
+          var modal = $("interestModal");
+          if (!modal || modal.hidden) return;
+          var listingId = modal.dataset.listingId;
+          if (!listingId) return;
+          if (!$("interestNdaAgree").checked) {
+            alert("비공개 처리 동의에 체크해 주세요.");
+            return;
+          }
+          var buyerName = $("interestBuyerName").value.trim();
+          var buyerContact = $("interestBuyerContact").value.trim();
+          if (!buyerName) {
+            alert("이름을 입력해 주세요.");
+            return;
+          }
+          if (!buyerContact) {
+            alert("연락처(이메일 또는 카카오 ID)를 입력해 주세요.");
+            return;
+          }
+          recordInterestSubmission(listingId);
+          $("interestModalStepForm").hidden = true;
+          $("interestModalStepSuccess").hidden = false;
+          updateDetailInterestRow(listingId);
+          $("interestSuccessBtn").focus();
+        });
+      }
+
+      document.addEventListener("keydown", function (e) {
+        if (e.key !== "Escape") return;
+        var delModal = $("deleteModal");
+        if (delModal && !delModal.hidden) {
+          closeDeleteModal();
+          return;
+        }
+        var stModal = $("statusModal");
+        if (stModal && !stModal.hidden) {
+          closeStatusModal();
+          return;
+        }
+        var peModal = $("photoEditModal");
+        if (peModal && !peModal.hidden) {
+          closePhotoEditModal();
+          return;
+        }
+        var modal = $("interestModal");
+        if (!modal || modal.hidden) return;
+        closeInterestModal();
+      });
+
+      var SAMPLE_LOADED_KEY = "gaegedang_sample_loaded";
+
+      function sampleRandomCreatedAt() {
+        return Date.now() - Math.floor(Math.random() * (14 * 24 * 60 * 60 * 1000));
+      }
+
+      function buildSampleListings() {
+        var defs = [
+          { storeName: "한양각", category: "식당", region: "서울 종로구", price: "9,800만 원", monthlyRevenue: 4200, monthlyProfit: 380, keyMoneyIncluded: true, leaseRemainingMonths: 28, description: "전용 33평(1층 상가), 2021년 전체 인테리어 교체 완료.\n종로 관광객·직장인 유동이 풍부한 코너 자리입니다.\n개인 건강 사정으로 조기 양도 협의 가능합니다.", contact: "kakao_hanyang01" },
+          { storeName: "모닝브루 성수", category: "카페", region: "서울 성동구", price: "4,800만 원", monthlyRevenue: 2900, monthlyProfit: 210, keyMoneyIncluded: false, leaseRemainingMonths: 20, description: "1층 통유리, 좌석 24·테라스 8.\n브루잉 바·싱글 원두 로스팅 내장.\n브랜드 이전 이직으로 매물 제시합니다.", contact: "morningbrew_ss" },
+          { storeName: "뷰티룸 미 영통", category: "미용실", region: "경기 수원시 영통구", price: "4,400만 원", monthlyRevenue: 2600, monthlyProfit: 205, keyMoneyIncluded: false, leaseRemainingMonths: 21, description: "아파트 상가 2층, 네일+헤어 복합.\n예약 앱 고정 단골 다수.\n임신 출산으로 업종 전환합니다.", contact: "beautyme_yt" },
+          { storeName: "세븐일레븐 동작대로점", category: "편의점", region: "서울 동작구", price: "2억 3,000만 원", monthlyRevenue: 18500, monthlyProfit: 420, keyMoneyIncluded: false, leaseRemainingMonths: 48, description: "대로변 1층, 주차장 인접. 24시 운영.\n본사 정산 데이터 열람 가능 범위 내 협의.\n지분 정리로 지분자만 양도 문의 주세요.", contact: "cvseven_dj" },
+          { storeName: "스피킹 영어학원 해운대", category: "기타", region: "부산 해운대구", price: "9,500만 원", monthlyRevenue: 4800, monthlyProfit: 420, keyMoneyIncluded: true, leaseRemainingMonths: 31, description: "학습실 5개·테스트룸 1, 수강생 100명 내외.\n브랜드 교재·CRM 사용 중.\n원장 지방 이전으로 급매 협의합니다.", contact: "academy_speaking_hae" }
+        ];
+        var valuationPresets = [
+          { profitInputMode: "monthly", sixMonthProfit: null, revenueTrend: "stable", ownerWorks: true, ownerWorkHours: 10, seasonality: "some", leaseRenewal: "certain", deliveryRatio: "low", staffCount: 4, staffStays: "yes", equipmentAge: "mid", liabilities: 0, revenueVerifiable: true },
+          { profitInputMode: "monthly", sixMonthProfit: null, revenueTrend: "stable", ownerWorks: true, ownerWorkHours: 10, seasonality: "none", leaseRenewal: "certain", deliveryRatio: "none", staffCount: 2, staffStays: "yes", equipmentAge: "new", liabilities: 0, revenueVerifiable: true },
+          { profitInputMode: "monthly", sixMonthProfit: null, revenueTrend: "stable", ownerWorks: true, ownerWorkHours: 9, seasonality: "none", leaseRenewal: "certain", deliveryRatio: "none", staffCount: 2, staffStays: "uncertain", equipmentAge: "mid", liabilities: 0, revenueVerifiable: true },
+          { profitInputMode: "monthly", sixMonthProfit: null, revenueTrend: "stable", ownerWorks: false, ownerWorkHours: null, seasonality: "none", leaseRenewal: "certain", deliveryRatio: "low", staffCount: 4, staffStays: "yes", equipmentAge: "mid", liabilities: 0, revenueVerifiable: true },
+          { profitInputMode: "monthly", sixMonthProfit: null, revenueTrend: "up", ownerWorks: true, ownerWorkHours: 12, seasonality: "some", leaseRenewal: "certain", deliveryRatio: "none", staffCount: 8, staffStays: "yes", equipmentAge: "mid", liabilities: 0, revenueVerifiable: true }
+        ];
+        var out = [];
+        for (var si = 0; si < defs.length; si++) {
+          var d = defs[si];
+          var vp = valuationPresets[si] || {};
+          var sampleOwnerWorks = vp.ownerWorks !== false;
+          var sampleOwnerHours = sampleOwnerWorks
+            ? vp.ownerWorkHours != null
+              ? vp.ownerWorkHours
+              : 10
+            : null;
+          out.push({
+            id: "sample-" + ("00" + (si + 1)).slice(-3),
+            storeName: d.storeName,
+            category: d.category,
+            region: d.region,
+            price: d.price,
+            description: d.description,
+            contact: d.contact,
+            monthlyRevenue: d.monthlyRevenue,
+            monthlyProfit: d.monthlyProfit,
+            profitInputMode: vp.profitInputMode || "monthly",
+            sixMonthProfit: vp.sixMonthProfit != null ? vp.sixMonthProfit : null,
+            revenueTrend: vp.revenueTrend || "stable",
+            ownerWorks: sampleOwnerWorks,
+            ownerWorkHours: sampleOwnerHours,
+            seasonality: vp.seasonality || "none",
+            leaseRenewal: vp.leaseRenewal || "unknown",
+            deliveryRatio: vp.deliveryRatio || "none",
+            staffCount: vp.staffCount != null ? vp.staffCount : 2,
+            staffStays: vp.staffStays || "yes",
+            equipmentAge: vp.equipmentAge || "mid",
+            liabilities: vp.liabilities != null ? vp.liabilities : 0,
+            revenueVerifiable: vp.revenueVerifiable !== false,
+            keyMoneyIncluded: d.keyMoneyIncluded,
+            leaseRemainingMonths: d.leaseRemainingMonths,
+            createdAt: sampleRandomCreatedAt(),
+            isSample: true,
+            photos: [SAMPLE_PHOTOS_BY_CATEGORY[d.category] || SAMPLE_PHOTOS_BY_CATEGORY["기타"]],
+          });
+        }
+        return out;
+      }
+
+      function injectSampleListingsOnce() {
+        try {
+          if (localStorage.getItem(SAMPLE_LOADED_KEY)) return;
+          saveListings(loadListings().concat(buildSampleListings()));
+          localStorage.setItem(SAMPLE_LOADED_KEY, "1");
+        } catch (err) {}
+      }
+
+      function migrateDeletePinsOnce() {
+        try {
+          if (localStorage.getItem(PIN_MIGRATED_KEY)) return;
+          var list = loadListings();
+          var changed = false;
+          for (var mi = 0; mi < list.length; mi++) {
+            var row = list[mi];
+            if (row && !Object.prototype.hasOwnProperty.call(row, "deletePin")) {
+              row.deletePin = "1234";
+              changed = true;
+            }
+          }
+          if (changed) saveListings(list);
+          localStorage.setItem(PIN_MIGRATED_KEY, "1");
+        } catch (errM) {}
+      }
+
+      function defaultValuationFieldsForCategory(cat) {
+        var cv = cat === "편의점";
+        return {
+          profitInputMode: "monthly",
+          sixMonthProfit: null,
+          revenueTrend: "stable",
+          ownerWorks: !cv,
+          ownerWorkHours: cv ? null : 10,
+          seasonality: cat === "식당" ? "some" : "none",
+          leaseRenewal: "unknown",
+          deliveryRatio: cat === "식당" ? "mid" : "none",
+          staffCount: cv ? 3 : 2,
+          staffStays: "yes",
+          equipmentAge: "mid",
+          liabilities: 0,
+          revenueVerifiable: true,
+        };
+      }
+
+      function migrateValuationV2Once() {
+        try {
+          if (localStorage.getItem(VALUATION_V2_MIGRATION_KEY)) return;
+          var list = loadListings();
+          var changed = false;
+          for (var vi = 0; vi < list.length; vi++) {
+            var row = list[vi];
+            if (!row || !row.isSample || row.revenueTrend != null) continue;
+            var defs = defaultValuationFieldsForCategory(row.category || "기타");
+            for (var dk in defs) {
+              if (!Object.prototype.hasOwnProperty.call(row, dk)) {
+                row[dk] = defs[dk];
+                changed = true;
+              }
+            }
+          }
+          if (changed) saveListings(list);
+          localStorage.setItem(VALUATION_V2_MIGRATION_KEY, "1");
+        } catch (errV) {}
+      }
+
+      injectSampleListingsOnce();
+      migrateDeletePinsOnce();
+      migratePhotoToPhotosV2Once();
+      migrateSamplePhotosOnce();
+      migrateValuationV2Once();
+
+      applyFilterCollapseFromStorage();
+      renderRecentSearchTags();
+
+      renderList();
+    })();
+
+  </script>
+</body>
+</html>
