@@ -2755,6 +2755,30 @@
     </div>
   </div>
 
+  <div id="resetPasswordModal" class="modal" hidden aria-hidden="true">
+    <button type="button" class="modal-backdrop" id="resetPasswordModalBackdrop" tabindex="-1"></button>
+    <div class="modal-dialog" role="dialog" aria-modal="true">
+      <div class="modal-body">
+        <h2 class="modal-title">새 비밀번호 설정</h2>
+        <div class="field">
+          <label for="resetNewPassword">
+            새 비밀번호 (6자리 이상)
+          </label>
+          <input type="password" id="resetNewPassword" autocomplete="new-password" />
+        </div>
+        <div class="field">
+          <label for="resetNewPasswordConfirm">
+            비밀번호 확인
+          </label>
+          <input type="password" id="resetNewPasswordConfirm" autocomplete="new-password" />
+        </div>
+        <div class="modal-footer-btns">
+          <button type="button" class="btn btn-primary" id="resetPasswordConfirmBtn">변경하기</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     (function () {
@@ -4422,6 +4446,27 @@
         $("authSignupPassword").value = "";
       }
 
+      function openResetPasswordModal() {
+        var modal = $("resetPasswordModal");
+        if (!modal) return;
+        modal.hidden = false;
+        modal.setAttribute("aria-hidden", "false");
+        document.body.style.overflow = "hidden";
+        setTimeout(function () {
+          if ($("resetNewPassword")) $("resetNewPassword").focus();
+        }, 0);
+      }
+
+      function closeResetPasswordModal() {
+        var modal = $("resetPasswordModal");
+        if (!modal) return;
+        modal.hidden = true;
+        modal.setAttribute("aria-hidden", "true");
+        document.body.style.overflow = "";
+        if ($("resetNewPassword")) $("resetNewPassword").value = "";
+        if ($("resetNewPasswordConfirm")) $("resetNewPasswordConfirm").value = "";
+      }
+
       function showAuthTab(tab) {
         $("authFormLogin").hidden = tab !== "login";
         $("authFormSignup").hidden = tab !== "signup";
@@ -5119,7 +5164,9 @@
           alert("이메일을 먼저 입력해 주세요.");
           return;
         }
-        var res = await sb.auth.resetPasswordForEmail(email);
+        var res = await sb.auth.resetPasswordForEmail(email, {
+          redirectTo: "https://gageya.vercel.app",
+        });
         if (res.error) {
           alert("발송 실패: " + res.error.message);
           return;
@@ -5127,6 +5174,30 @@
         alert("비밀번호 재설정 이메일을 발송했습니다.");
         closeAuthModal();
       });
+
+      $("resetPasswordConfirmBtn").addEventListener("click", async function () {
+        var pw = $("resetNewPassword").value;
+        var pwc = $("resetNewPasswordConfirm").value;
+        if (!pw || pw.length < 6) {
+          alert("비밀번호는 6자리 이상이어야 합니다.");
+          return;
+        }
+        if (pw !== pwc) {
+          alert("비밀번호가 일치하지 않습니다.");
+          return;
+        }
+        var res = await sb.auth.updateUser({ password: pw });
+        if (res.error) {
+          alert("변경 실패: " + res.error.message);
+          return;
+        }
+        alert("비밀번호가 변경되었습니다. 다시 로그인해 주세요.");
+        closeResetPasswordModal();
+        await sb.auth.signOut();
+        updateAuthUI(null);
+      });
+
+      $("resetPasswordModalBackdrop").addEventListener("click", closeResetPasswordModal);
 
       $("authSignupBtn").addEventListener("click", async function () {
         var email = $("authSignupEmail").value.trim();
@@ -5815,6 +5886,16 @@
       }
 
       async function initApp() {
+        // 비밀번호 재설정 링크로 접근했는지 확인
+        var hashParams = new URLSearchParams(window.location.hash.replace("#", ""));
+        if (hashParams.get("type") === "recovery") {
+          sb.auth.getSession().then(function (res) {
+            if (res.data && res.data.session) {
+              updateAuthUI(res.data.session.user);
+              openResetPasswordModal();
+            }
+          });
+        }
         var cc = $("cardContainer");
         if (cc) cc.textContent = "매물을 불러오는 중...";
         await injectSampleListingsOnce();
