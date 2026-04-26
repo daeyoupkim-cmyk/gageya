@@ -1788,11 +1788,6 @@
       }
     }
 
-    #navLogout,
-    #navMyListings {
-      display: none !important;
-    }
-
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 </head>
@@ -4433,13 +4428,13 @@
         var myListingsBtn = $("navMyListings");
 
         if (user) {
-          if (loginBtn) loginBtn.style.display = "none";
-          if (logoutBtn) logoutBtn.style.removeProperty("display");
-          if (myListingsBtn) myListingsBtn.style.removeProperty("display");
+          if (loginBtn) loginBtn.hidden = true;
+          if (logoutBtn) logoutBtn.hidden = false;
+          if (myListingsBtn) myListingsBtn.hidden = false;
         } else {
-          if (loginBtn) loginBtn.style.removeProperty("display");
-          if (logoutBtn) logoutBtn.style.display = "none";
-          if (myListingsBtn) myListingsBtn.style.display = "none";
+          if (loginBtn) loginBtn.hidden = false;
+          if (logoutBtn) logoutBtn.hidden = true;
+          if (myListingsBtn) myListingsBtn.hidden = true;
         }
       }
 
