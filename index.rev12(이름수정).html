@@ -1805,6 +1805,9 @@
       가게야
     </button>
     <div class="header-actions">
+      <button type="button" class="btn btn-ghost" id="navMyListings" hidden>내 매물</button>
+      <button type="button" class="btn btn-ghost" id="navLogin">로그인</button>
+      <button type="button" class="btn btn-ghost" id="navLogout" hidden>로그아웃</button>
       <button type="button" class="btn btn-ghost" id="navList">매물 보기</button>
       <button type="button" class="btn btn-primary" id="navRegister">매물 등록</button>
     </div>
@@ -2434,6 +2437,12 @@
         </div>
       </div>
     </section>
+
+    <section id="viewMyListings" class="view" aria-labelledby="myListingsHeading">
+      <h1 id="myListingsHeading" class="page-title">내 매물</h1>
+      <p class="page-desc">내가 등록한 매물 목록입니다.</p>
+      <div id="myListingsContainer" class="card-grid"></div>
+    </section>
     </div>
   </main>
 
@@ -2689,6 +2698,55 @@
     </div>
   </div>
 
+  <div id="authModal" class="modal" hidden aria-hidden="true">
+    <button type="button" class="modal-backdrop" id="authModalBackdrop" tabindex="-1"></button>
+    <div class="modal-dialog" role="dialog" aria-modal="true">
+      <div class="modal-body">
+
+        <!-- 탭 -->
+        <div style="display:flex;gap:0.5rem;margin-bottom:1.25rem;">
+          <button type="button" class="btn btn-primary" id="authTabLogin" style="flex:1;font-size:0.85rem;">로그인</button>
+          <button type="button" class="btn btn-ghost" id="authTabSignup" style="flex:1;font-size:0.85rem;">회원가입</button>
+        </div>
+
+        <!-- 로그인 폼 -->
+        <div id="authFormLogin">
+          <h2 class="modal-title">로그인</h2>
+          <div class="field">
+            <label for="authLoginEmail">이메일</label>
+            <input type="email" id="authLoginEmail" autocomplete="email" />
+          </div>
+          <div class="field">
+            <label for="authLoginPassword">비밀번호</label>
+            <input type="password" id="authLoginPassword" autocomplete="current-password" />
+          </div>
+          <div class="modal-footer-btns">
+            <button type="button" class="btn btn-primary" id="authLoginBtn">로그인</button>
+            <button type="button" class="btn btn-ghost" id="authLoginCancelBtn">취소</button>
+          </div>
+        </div>
+
+        <!-- 회원가입 폼 -->
+        <div id="authFormSignup" hidden>
+          <h2 class="modal-title">회원가입</h2>
+          <div class="field">
+            <label for="authSignupEmail">이메일</label>
+            <input type="email" id="authSignupEmail" autocomplete="email" />
+          </div>
+          <div class="field">
+            <label for="authSignupPassword">비밀번호 (6자리 이상)</label>
+            <input type="password" id="authSignupPassword" autocomplete="new-password" />
+          </div>
+          <div class="modal-footer-btns">
+            <button type="button" class="btn btn-primary" id="authSignupBtn">가입하기</button>
+            <button type="button" class="btn btn-ghost" id="authSignupCancelBtn">취소</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     (function () {
@@ -2701,6 +2759,7 @@
       var interestCountsCache = {};
       var PIN_KEY_PREFIX = "gageya_pin_";
       var MAX_LISTING_PHOTOS = 5;
+      var currentUser = null;
 
       function rowToListing(row) {
         if (!row) return null;
@@ -2733,6 +2792,7 @@
           isSample: !!row.is_sample,
           createdAt: row.created_at,
           sellerEmail: row.seller_email,
+          userId: row.user_id || null,
         };
         if (row.status != null && row.status !== "") item.status = row.status;
         return item;
@@ -2768,6 +2828,7 @@
           status: item.status != null && item.status !== "" ? item.status : null,
           is_sample: !!item.isSample,
           created_at: item.createdAt,
+          user_id: item.userId || null,
         };
         var se = item.sellerEmail != null ? String(item.sellerEmail).trim() : "";
         if (se !== "") {
@@ -3870,6 +3931,7 @@
         if (name === "list") $("viewList").classList.add("active");
         if (name === "register") $("viewRegister").classList.add("active");
         if (name === "detail") $("viewDetail").classList.add("active");
+        if (name === "myListings") $("viewMyListings").classList.add("active");
         window.scrollTo(0, 0);
         if (name === "home") {
           syncHomeHeaderFromScroll();
@@ -4332,6 +4394,85 @@
         return div.innerHTML;
       }
 
+      function openAuthModal() {
+        $("authModal").hidden = false;
+        $("authModal").setAttribute("aria-hidden", "false");
+        document.body.style.overflow = "hidden";
+        showAuthTab("login");
+        setTimeout(function () {
+          $("authLoginEmail").focus();
+        }, 0);
+      }
+
+      function closeAuthModal() {
+        $("authModal").hidden = true;
+        $("authModal").setAttribute("aria-hidden", "true");
+        document.body.style.overflow = "";
+        $("authLoginEmail").value = "";
+        $("authLoginPassword").value = "";
+        $("authSignupEmail").value = "";
+        $("authSignupPassword").value = "";
+      }
+
+      function showAuthTab(tab) {
+        $("authFormLogin").hidden = tab !== "login";
+        $("authFormSignup").hidden = tab !== "signup";
+        $("authTabLogin").className = "btn " + (tab === "login" ? "btn-primary" : "btn-ghost");
+        $("authTabSignup").className = "btn " + (tab === "signup" ? "btn-primary" : "btn-ghost");
+      }
+
+      function updateAuthUI(user) {
+        currentUser = user;
+        $("navLogin").hidden = !!user;
+        $("navLogout").hidden = !user;
+        $("navMyListings").hidden = !user;
+      }
+
+      async function renderMyListings() {
+        var container = $("myListingsContainer");
+        if (!container) return;
+        if (!currentUser) {
+          container.innerHTML =
+            '<div class="empty-state"><p>' + "로그인 후 내 매물을 확인할 수 있습니다.</p></div>";
+          return;
+        }
+        var mine = listingsCache.filter(function (item) {
+          return item.userId === currentUser.id;
+        });
+        if (mine.length === 0) {
+          container.innerHTML =
+            '<div class="empty-state">' +
+            "<p>등록한 매물이 없습니다.</p>" +
+            '<button type="button" class="btn btn-primary" ' +
+            'id="myListingsRegisterBtn">매물 등록하기</button></div>';
+          var regBtn = $("myListingsRegisterBtn");
+          if (regBtn)
+            regBtn.addEventListener("click", function () {
+              showView("register");
+              updateValuationUI();
+            });
+          return;
+        }
+        container.innerHTML = "";
+        mine.forEach(function (item) {
+          var btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "listing-card";
+          btn.innerHTML =
+            '<p class="card-name"></p>' +
+            '<div class="card-meta"></div>' +
+            '<div class="card-price"></div>';
+          btn.querySelector(".card-name").textContent = item.storeName;
+          btn.querySelector(".card-meta").innerHTML =
+            "<span>" + escapeHtml(item.category) + "</span>" + "<span>" + escapeHtml(item.region) + "</span>";
+          btn.querySelector(".card-price").textContent = formatPriceDisplay(item.price);
+          btn.addEventListener("click", function () {
+            openDetail(item.id).catch(console.error);
+          });
+          container.appendChild(btn);
+        });
+      }
+
       function findById(id) {
         for (var i = 0; i < listingsCache.length; i++) {
           if (listingsCache[i].id === id) return listingsCache[i];
@@ -4770,6 +4911,7 @@
           keyMoneyIncluded: keyMoneyIncluded,
           leaseRemainingMonths: leaseRemainingMonths,
           createdAt: Date.now(),
+          userId: currentUser ? currentUser.id : null,
         };
         if (pendingRegisterPhotos.length > 0) {
           newItem.photos = pendingRegisterPhotos.slice();
@@ -4896,6 +5038,84 @@
       $("navRegister").addEventListener("click", function () {
         showView("register");
         updateValuationUI();
+      });
+
+      $("navLogin").addEventListener("click", openAuthModal);
+      $("navMyListings").addEventListener("click", function () {
+        renderMyListings().then(function () {
+          showView("myListings");
+        });
+      });
+      $("navLogout").addEventListener("click", async function () {
+        await sb.auth.signOut();
+        updateAuthUI(null);
+        await renderList();
+        showView("list");
+      });
+
+      $("authModalBackdrop").addEventListener("click", closeAuthModal);
+      $("authLoginCancelBtn").addEventListener("click", closeAuthModal);
+      $("authSignupCancelBtn").addEventListener("click", closeAuthModal);
+
+      $("authTabLogin").addEventListener("click", function () {
+        showAuthTab("login");
+      });
+      $("authTabSignup").addEventListener("click", function () {
+        showAuthTab("signup");
+      });
+
+      $("authLoginBtn").addEventListener("click", async function () {
+        var email = $("authLoginEmail").value.trim();
+        var password = $("authLoginPassword").value;
+        if (!email || !password) {
+          alert("이메일과 비밀번호를 입력해 주세요.");
+          return;
+        }
+        var res = await sb.auth.signInWithPassword({
+          email: email,
+          password: password,
+        });
+        if (res.error) {
+          alert("로그인 실패: " + res.error.message);
+          return;
+        }
+        updateAuthUI(res.data.user);
+        closeAuthModal();
+        await loadListings();
+        await renderList();
+      });
+
+      $("authSignupBtn").addEventListener("click", async function () {
+        var email = $("authSignupEmail").value.trim();
+        var password = $("authSignupPassword").value;
+        if (!email || !password) {
+          alert("이메일과 비밀번호를 입력해 주세요.");
+          return;
+        }
+        if (password.length < 6) {
+          alert("비밀번호는 6자리 이상이어야 합니다.");
+          return;
+        }
+        var res = await sb.auth.signUp({
+          email: email,
+          password: password,
+        });
+        if (res.error) {
+          alert("가입 실패: " + res.error.message);
+          return;
+        }
+        alert("가입 완료! 이메일 인증 후 로그인해 주세요.");
+        closeAuthModal();
+      });
+
+      sb.auth.getSession().then(function (res) {
+        if (res.data && res.data.session) {
+          updateAuthUI(res.data.session.user);
+        }
+      });
+
+      sb.auth.onAuthStateChange(function (event, session) {
+        updateAuthUI(session ? session.user : null);
       });
 
       var registerFormEl = $("registerForm");
@@ -5418,6 +5638,11 @@
         var peModal = $("photoEditModal");
         if (peModal && !peModal.hidden) {
           closePhotoEditModal();
+          return;
+        }
+        var authModalEl = $("authModal");
+        if (authModalEl && !authModalEl.hidden) {
+          closeAuthModal();
           return;
         }
         var modal = $("interestModal");
