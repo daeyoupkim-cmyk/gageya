@@ -4423,9 +4423,19 @@
 
       function updateAuthUI(user) {
         currentUser = user;
-        $("navLogin").hidden = !!user;
-        $("navLogout").hidden = !user;
-        $("navMyListings").hidden = !user;
+        var loginBtn = $("navLogin");
+        var logoutBtn = $("navLogout");
+        var myListingsBtn = $("navMyListings");
+
+        if (user) {
+          if (loginBtn) loginBtn.hidden = true;
+          if (logoutBtn) logoutBtn.hidden = false;
+          if (myListingsBtn) myListingsBtn.hidden = false;
+        } else {
+          if (loginBtn) loginBtn.hidden = false;
+          if (logoutBtn) logoutBtn.hidden = true;
+          if (myListingsBtn) myListingsBtn.hidden = true;
+        }
       }
 
       async function renderMyListings() {
@@ -5119,6 +5129,8 @@
       sb.auth.getSession().then(function (res) {
         if (res.data && res.data.session) {
           updateAuthUI(res.data.session.user);
+        } else {
+          updateAuthUI(null);
         }
       });
 
