@@ -2027,6 +2027,19 @@
     <section id="viewRegister" class="view" aria-labelledby="registerHeading">
       <h1 id="registerHeading" class="page-title">매물 등록</h1>
       <p class="page-desc">매물 정보를 등록해 두시면 동일 브라우저에 안전하게 저장됩니다.</p>
+      <p
+        id="draftNotice"
+        style="font-size:0.78rem;color:var(--muted);margin:-0.75rem 0 1rem;display:none;"
+      >
+        💾 이전에 작성하던 내용이 복원되었습니다.
+        <button
+          type="button"
+          id="draftClearBtn"
+          style="background:none;border:none;color:var(--orange);font-size:0.78rem;cursor:pointer;font-family:inherit;text-decoration:underline;"
+        >
+          초기화
+        </button>
+      </p>
       <form class="register-form" id="registerForm" novalidate>
         <div class="field">
           <label for="storeName">가게 이름 <span aria-hidden="true">*</span></label>
@@ -2304,6 +2317,9 @@
             <button type="button" class="btn btn-primary" id="detailInterestBtn">관심 있어요</button>
           </div>
           <p class="detail-interest-count" id="detailInterestCount" aria-live="polite">관심 0명</p>
+          <p id="detailViewCount" style="font-size:0.72rem;font-weight:600;color:var(--muted);margin:0.2rem 0 0;">
+            조회 0회
+          </p>
         </div>
       </div>
       <div class="detail-body">
@@ -2789,9 +2805,11 @@
       var sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
       var listingsCache = [];
       var interestCountsCache = {};
+      var viewCountsCache = {};
       var PIN_KEY_PREFIX = "gageya_pin_";
       var MAX_LISTING_PHOTOS = 5;
       var currentUser = null;
+      var DRAFT_KEY = "gageya_register_draft";
 
       function rowToListing(row) {
         if (!row) return null;
@@ -3641,13 +3659,20 @@
           var res = await sb.from("interest_counts").select("listing_id, count");
           if (res.error) throw res.error;
           interestCountsCache = {};
+          viewCountsCache = {};
           var data = res.data;
           if (data) {
             for (var i = 0; i < data.length; i++) {
               var r = data[i];
               var n = r.count;
-              interestCountsCache[r.listing_id] =
+              var lid = r.listing_id;
+              var cnt =
                 typeof n === "number" && isFinite(n) && n >= 0 ? Math.floor(n) : 0;
+              if (typeof lid === "string" && lid.indexOf("view_") === 0) {
+                viewCountsCache[lid.slice(5)] = cnt;
+              } else {
+                interestCountsCache[lid] = cnt;
+              }
             }
           }
         } catch (e) {
@@ -3679,6 +3704,88 @@
       function getInterestCount(listingId) {
         var n = interestCountsCache[listingId];
         return typeof n === "number" && isFinite(n) && n >= 0 ? Math.floor(n) : 0;
+      }
+
+      async function recordView(listingId) {
+        try {
+          var key = "gageya_viewed_" + listingId;
+          var last = localStorage.getItem(key);
+          var now = Date.now();
+          if (last && now - parseInt(last, 10) < 3600000) return;
+          localStorage.setItem(key, String(now));
+
+          var sel = await sb
+            .from("interest_counts")
+            .select("count")
+            .eq("listing_id", "view_" + listingId)
+            .maybeSingle();
+          if (sel.error) throw sel.error;
+          if (sel.data && typeof sel.data.count === "number") {
+            await sb
+              .from("interest_counts")
+              .update({ count: sel.data.count + 1 })
+              .eq("listing_id", "view_" + listingId);
+            viewCountsCache[listingId] = sel.data.count + 1;
+          } else {
+            await sb.from("interest_counts").insert({ listing_id: "view_" + listingId, count: 1 });
+            viewCountsCache[listingId] = 1;
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
+      function getViewCount(listingId) {
+        return viewCountsCache[listingId] || 0;
+      }
+
+      function saveDraft() {
+        try {
+          var draft = {
+            storeName: $("storeName").value,
+            category: $("category").value,
+            region: $("region").value,
+            price: $("price").value,
+            description: $("description").value,
+            contact: $("contact").value,
+            sellerEmail: $("sellerEmail").value,
+          };
+          localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+        } catch (e) {}
+      }
+
+      function loadDraft() {
+        try {
+          var dn = $("draftNotice");
+          if (dn) dn.style.display = "none";
+          var raw = localStorage.getItem(DRAFT_KEY);
+          if (!raw) return;
+          var d = JSON.parse(raw);
+          if ($("storeName") && d.storeName) $("storeName").value = d.storeName;
+          if ($("category") && d.category) $("category").value = d.category;
+          if ($("region") && d.region) $("region").value = d.region;
+          if ($("price") && d.price) $("price").value = d.price;
+          if ($("description") && d.description) $("description").value = d.description;
+          if ($("contact") && d.contact) $("contact").value = d.contact;
+          if ($("sellerEmail") && d.sellerEmail) $("sellerEmail").value = d.sellerEmail;
+          if (dn) {
+            var hasContent =
+              ($("storeName") && $("storeName").value.trim()) ||
+              ($("region") && $("region").value.trim()) ||
+              ($("price") && $("price").value.trim()) ||
+              ($("description") && $("description").value.trim()) ||
+              ($("contact") && $("contact").value.trim()) ||
+              ($("sellerEmail") && $("sellerEmail").value.trim()) ||
+              ($("category") && $("category").value);
+            dn.style.display = hasContent ? "block" : "none";
+          }
+        } catch (e) {}
+      }
+
+      function clearDraft() {
+        try {
+          localStorage.removeItem(DRAFT_KEY);
+        } catch (e) {}
       }
 
       async function recordInterestSubmission(listingId) {
@@ -3961,7 +4068,10 @@
           if ($("viewHome")) $("viewHome").classList.add("active");
         }
         if (name === "list") $("viewList").classList.add("active");
-        if (name === "register") $("viewRegister").classList.add("active");
+        if (name === "register") {
+          $("viewRegister").classList.add("active");
+          loadDraft();
+        }
         if (name === "detail") $("viewDetail").classList.add("active");
         if (name === "myListings") $("viewMyListings").classList.add("active");
         window.scrollTo(0, 0);
@@ -4314,14 +4424,66 @@
           var emptyFilter = document.createElement("div");
           emptyFilter.className = "empty-state";
           emptyFilter.style.gridColumn = "1 / -1";
+
+          var cat = getSelectedCategoryFilter();
+          var similar = listingsCache
+            .filter(function (item) {
+              if (normalizeListingStatus(item) === "sold") return false;
+              if (cat && item.category === cat) return true;
+              return false;
+            })
+            .slice(0, 3);
+
+          var similarHtml = "";
+          if (similar.length > 0) {
+            similarHtml =
+              '<p style="font-size:0.82rem;font-weight:600;' +
+              "color:var(--navy);margin:1rem 0 0.5rem;\">" +
+              "비슷한 매물은 어때요?</p>" +
+              '<div style="display:flex;flex-direction:column;' +
+              'gap:0.4rem;width:100%;\">';
+            similar.forEach(function (item) {
+              similarHtml +=
+                '<button type="button" class="listing-card" data-similar-listing="' +
+                String(item.id).replace(/"/g, "&quot;") +
+                '" style="text-align:left;">' +
+                "<p class=\"card-name\">" +
+                escapeHtml(item.storeName) +
+                "</p>" +
+                '<div class="card-meta"><span>' +
+                escapeHtml(item.category) +
+                "</span><span>" +
+                escapeHtml(item.region) +
+                "</span></div>" +
+                '<div class="card-price">' +
+                escapeHtml(String(formatPriceDisplay(item.price))) +
+                "</div>" +
+                "</button>";
+            });
+            similarHtml += "</div>";
+          }
+
           emptyFilter.innerHTML =
             "<p>조건에 맞는 매물이 없습니다.</p>" +
-            '<button type="button" class="btn btn-primary" id="emptyFilterReset">필터 초기화</button>';
+            '<button type="button" class="btn btn-primary" ' +
+            'id="emptyFilterReset">필터 초기화</button>' +
+            similarHtml;
+
           container.appendChild(emptyFilter);
           $("emptyFilterReset").addEventListener("click", function () {
             resetAllFilters();
             renderList().catch(function (err) {
               console.error(err);
+            });
+          });
+          emptyFilter.querySelectorAll("[data-similar-listing]").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+              var sid = btn.getAttribute("data-similar-listing");
+              if (sid) {
+                openDetail(sid).catch(function (err) {
+                  console.error(err);
+                });
+              }
             });
           });
           return;
@@ -4782,6 +4944,7 @@
       }
 
       async function openDetail(id) {
+        await recordView(id);
         var item = findById(id);
         if (!item) {
           showView("list");
@@ -4892,6 +5055,8 @@
         }
         $("viewDetail").dataset.currentId = id;
         updateDetailInterestRow(id);
+        var vc = $("detailViewCount");
+        if (vc) vc.textContent = "조회 " + getViewCount(id) + "회";
         applyDetailStatusUI(item);
         showView("detail");
       }
@@ -4990,6 +5155,9 @@
             localStorage.setItem(PIN_KEY_PREFIX + newItem.id, pinRaw);
           } catch (ePin) {}
         }
+        clearDraft();
+        var draftNoticeEl = $("draftNotice");
+        if (draftNoticeEl) draftNoticeEl.style.display = "none";
         $("registerForm").reset();
         clearRegisterPhotoPreview();
         updateValuationUI();
@@ -5002,6 +5170,9 @@
       });
 
       $("cancelRegister").addEventListener("click", function () {
+        clearDraft();
+        var draftNoticeEl2 = $("draftNotice");
+        if (draftNoticeEl2) draftNoticeEl2.style.display = "none";
         $("registerForm").reset();
         clearRegisterPhotoPreview();
         updateValuationUI();
@@ -5246,6 +5417,18 @@
       if (registerFormEl) {
         registerFormEl.addEventListener("input", updateValuationUI);
         registerFormEl.addEventListener("change", updateValuationUI);
+        registerFormEl.addEventListener("input", function () {
+          saveDraft();
+        });
+      }
+      if ($("draftClearBtn")) {
+        $("draftClearBtn").addEventListener("click", function () {
+          clearDraft();
+          $("registerForm").reset();
+          var dn = $("draftNotice");
+          if (dn) dn.style.display = "none";
+          updateValuationUI();
+        });
       }
 
       $("detailBack").addEventListener("click", function () {
@@ -5738,6 +5921,27 @@
               });
             } catch (eEmail) {
               console.error(eEmail);
+            }
+          }
+          if (interestItem) {
+            var buyerEmail = $("interestBuyerContact").value.trim();
+            var isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(buyerEmail);
+            if (isEmail) {
+              try {
+                await emailjs.send("service_pv3ohtd", "template_7zaej86", {
+                  store_name: interestItem.storeName,
+                  seller_email: buyerEmail,
+                  buyer_name: buyerName,
+                  buyer_contact: "가게야 시스템",
+                  buyer_intro:
+                    interestItem.storeName +
+                    " 매물에 관심 표명이 완료되었습니다. " +
+                    "판매자가 확인 후 연락드릴 예정입니다.",
+                  buyer_budget: "—",
+                });
+              } catch (eBuyer) {
+                console.error(eBuyer);
+              }
             }
           }
           $("interestModalStepForm").hidden = true;
