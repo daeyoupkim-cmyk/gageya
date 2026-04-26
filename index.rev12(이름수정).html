@@ -5104,8 +5104,16 @@
           alert("가입 실패: " + res.error.message);
           return;
         }
-        alert("가입 완료! 이메일 인증 후 로그인해 주세요.");
-        closeAuthModal();
+        if (res.data && res.data.user) {
+          updateAuthUI(res.data.user);
+          closeAuthModal();
+          await loadListings();
+          await renderList();
+          alert("가입이 완료되었습니다. 환영합니다!");
+        } else {
+          alert("가입 완료! 로그인해 주세요.");
+          showAuthTab("login");
+        }
       });
 
       sb.auth.getSession().then(function (res) {
