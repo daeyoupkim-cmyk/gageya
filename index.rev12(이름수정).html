@@ -5928,16 +5928,9 @@
             var isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(buyerEmail);
             if (isEmail) {
               try {
-                await emailjs.send("service_pv3ohtd", "template_7zaej86", {
+                await emailjs.send("service_pv3ohtd", "template_jhfq2ah", {
                   store_name: interestItem.storeName,
-                  seller_email: buyerEmail,
-                  buyer_name: buyerName,
-                  buyer_contact: "가게야 시스템",
-                  buyer_intro:
-                    interestItem.storeName +
-                    " 매물에 관심 표명이 완료되었습니다. " +
-                    "판매자가 확인 후 연락드릴 예정입니다.",
-                  buyer_budget: "—",
+                  buyer_email: buyerEmail,
                 });
               } catch (eBuyer) {
                 console.error(eBuyer);
