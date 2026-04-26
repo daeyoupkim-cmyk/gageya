@@ -2729,6 +2729,9 @@
             <button type="button" class="btn btn-primary" id="authLoginBtn">로그인</button>
             <button type="button" class="btn btn-ghost" id="authLoginCancelBtn">취소</button>
           </div>
+          <button type="button" class="btn btn-ghost" id="authForgotBtn" style="font-size:0.8rem;margin-top:0.25rem;">
+            비밀번호를 잊으셨나요?
+          </button>
         </div>
 
         <!-- 회원가입 폼 -->
@@ -4947,7 +4950,10 @@
         updateValuationUI();
         await loadListings();
         await renderList();
-        showView("list");
+        openDetail(newItem.id).catch(function (err) {
+          console.error(err);
+          showView("list");
+        });
       });
 
       $("cancelRegister").addEventListener("click", function () {
@@ -5045,11 +5051,19 @@
       var homeCtaRegister = $("homeCtaRegister");
       if (homeCtaRegister) {
         homeCtaRegister.addEventListener("click", function () {
+          if (!currentUser) {
+            openAuthModal();
+            return;
+          }
           showView("register");
           updateValuationUI();
         });
       }
       $("navRegister").addEventListener("click", function () {
+        if (!currentUser) {
+          openAuthModal();
+          return;
+        }
         showView("register");
         updateValuationUI();
       });
@@ -5097,6 +5111,21 @@
         closeAuthModal();
         await loadListings();
         await renderList();
+      });
+
+      $("authForgotBtn").addEventListener("click", async function () {
+        var email = $("authLoginEmail").value.trim();
+        if (!email) {
+          alert("이메일을 먼저 입력해 주세요.");
+          return;
+        }
+        var res = await sb.auth.resetPasswordForEmail(email);
+        if (res.error) {
+          alert("발송 실패: " + res.error.message);
+          return;
+        }
+        alert("비밀번호 재설정 이메일을 발송했습니다.");
+        closeAuthModal();
       });
 
       $("authSignupBtn").addEventListener("click", async function () {
