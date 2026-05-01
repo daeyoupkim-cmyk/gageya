@@ -1821,6 +1821,16 @@
         id="navLogin">로그인</button>
       <button type="button" class="btn btn-ghost nav-auth-hidden"
         id="navLogout">로그아웃</button>
+      <button type="button" class="btn btn-ghost nav-auth-hidden"
+        id="navChat">
+        채팅
+        <span id="chatUnreadBadge"
+          style="display:none;
+            background:var(--orange);color:#fff;
+            font-size:0.65rem;font-weight:700;
+            border-radius:999px;padding:0.1rem 0.4rem;
+            margin-left:0.3rem;">0</span>
+      </button>
       <button type="button" class="btn btn-ghost"
         id="navMyInterests">관심 매물</button>
       <button type="button" class="btn btn-ghost" id="navList">매물 보기</button>
@@ -2325,6 +2335,11 @@
         <div class="detail-interest-block">
           <div class="detail-interest-actions">
             <button type="button" class="btn btn-primary" id="detailInterestBtn">관심 있어요</button>
+            <button type="button" class="btn btn-secondary"
+              id="detailChatBtn"
+              style="margin-top:0.4rem;">
+              판매자에게 채팅하기
+            </button>
           </div>
           <p class="detail-interest-count" id="detailInterestCount" aria-live="polite">관심 0명</p>
           <p id="detailViewCount" style="font-size:0.72rem;font-weight:600;color:var(--muted);margin:0.2rem 0 0;">
@@ -2479,6 +2494,53 @@
       <h1 id="myInterestsHeading" class="page-title">관심 매물</h1>
       <p class="page-desc">관심 표명한 매물 목록입니다.</p>
       <div id="myInterestsContainer" class="card-grid"></div>
+    </section>
+    <section id="viewChat" class="view" aria-labelledby="chatHeading">
+      <div class="back-row">
+        <button type="button" class="btn-back" id="chatBack">← 채팅 목록</button>
+      </div>
+      <div id="chatRoomHeader" style="
+        background:var(--surface);
+        border-radius:var(--radius);
+        box-shadow:var(--shadow-card);
+        padding:1rem 1.25rem;
+        margin-bottom:0.75rem;
+      ">
+        <p id="chatRoomTitle" style="margin:0;font-weight:700;
+          font-size:1rem;color:var(--text);"></p>
+        <p id="chatRoomSub" style="margin:0.2rem 0 0;
+          font-size:0.8rem;color:var(--muted);"></p>
+      </div>
+      <div id="chatMessages" style="
+        background:var(--surface);
+        border-radius:var(--radius);
+        box-shadow:var(--shadow-card);
+        padding:1rem;
+        min-height:320px;
+        max-height:480px;
+        overflow-y:auto;
+        display:flex;
+        flex-direction:column;
+        gap:0.5rem;
+        margin-bottom:0.75rem;
+      "></div>
+      <div style="display:flex;gap:0.5rem;">
+        <input type="text" id="chatInput"
+          placeholder="메시지를 입력하세요"
+          style="flex:1;padding:0.65rem 0.75rem;
+            border:1px solid var(--border);
+            border-radius:var(--radius);
+            font-size:1rem;font-family:inherit;" />
+        <button type="button" class="btn btn-primary"
+          id="chatSendBtn">전송</button>
+      </div>
+    </section>
+
+    <section id="viewChatList" class="view"
+      aria-labelledby="chatListHeading">
+      <h1 id="chatListHeading" class="page-title">채팅</h1>
+      <p class="page-desc">진행 중인 대화 목록입니다.</p>
+      <div id="chatListContainer"></div>
     </section>
     </div>
   </main>
@@ -2827,6 +2889,9 @@
       var currentUser = null;
       var DRAFT_KEY = "gageya_register_draft";
       var INTEREST_KEY = "gageya_interests";
+      var currentRoomId = null;
+      var chatSubscription = null;
+      var chatRoomsCache = [];
 
       function rowToListing(row) {
         if (!row) return null;
@@ -3844,6 +3909,197 @@
         }
       }
 
+      async function getOrCreateChatRoom(listingId, sellerId) {
+        if (!currentUser) { openAuthModal(); return null; }
+        try {
+          var existing = await sb
+            .from("chat_rooms")
+            .select("*")
+            .eq("listing_id", listingId)
+            .eq("buyer_id", currentUser.id)
+            .maybeSingle();
+          if (existing.error) throw existing.error;
+          if (existing.data) return existing.data;
+
+          var now = Date.now();
+          var created = await sb
+            .from("chat_rooms")
+            .insert({
+              listing_id: listingId,
+              buyer_id: currentUser.id,
+              seller_id: sellerId || null,
+              created_at: now,
+            })
+            .select()
+            .single();
+          if (created.error) throw created.error;
+          return created.data;
+        } catch(e) {
+          console.error(e);
+          return null;
+        }
+      }
+
+      async function sendChatMessage(roomId, content) {
+        if (!currentUser || !content.trim()) return;
+        try {
+          var res = await sb.from("chat_messages").insert({
+            room_id: roomId,
+            sender_id: currentUser.id,
+            content: content.trim(),
+            created_at: Date.now(),
+          });
+          if (res.error) throw res.error;
+        } catch(e) {
+          console.error(e);
+        }
+      }
+
+      function renderChatMessage(msg) {
+        var isMine = currentUser && msg.sender_id === currentUser.id;
+        var div = document.createElement("div");
+        div.style.cssText =
+          "display:flex;flex-direction:column;" +
+          (isMine ? "align-items:flex-end;" : "align-items:flex-start;");
+
+        var bubble = document.createElement("div");
+        bubble.style.cssText =
+          "max-width:75%;padding:0.55rem 0.75rem;" +
+          "border-radius:12px;font-size:0.9rem;line-height:1.45;" +
+          "word-break:break-word;" +
+          (isMine
+            ? "background:var(--navy);color:#fff;"
+            : "background:var(--bg);color:var(--text);border:1px solid var(--border);");
+        bubble.textContent = msg.content;
+
+        var time = document.createElement("span");
+        time.style.cssText =
+          "font-size:0.65rem;color:var(--muted);margin-top:0.2rem;";
+        var d = new Date(msg.created_at);
+        time.textContent =
+          d.getHours().toString().padStart(2, "0") + ":" +
+          d.getMinutes().toString().padStart(2, "0");
+
+        div.appendChild(bubble);
+        div.appendChild(time);
+        return div;
+      }
+
+      async function openChatRoom(listingId, roomId) {
+        var item = findById(listingId);
+        if (!item) return;
+
+        if ($("chatRoomTitle"))
+          $("chatRoomTitle").textContent = item.storeName;
+        if ($("chatRoomSub"))
+          $("chatRoomSub").textContent =
+            escapeHtml(item.category) + " · " + escapeHtml(item.region);
+
+        currentRoomId = roomId;
+
+        if (chatSubscription) {
+          sb.removeChannel(chatSubscription);
+          chatSubscription = null;
+        }
+
+        var msgContainer = $("chatMessages");
+        if (msgContainer) msgContainer.innerHTML = "";
+
+        try {
+          var res = await sb
+            .from("chat_messages")
+            .select("*")
+            .eq("room_id", roomId)
+            .order("created_at", { ascending: true });
+          if (res.error) throw res.error;
+          if (res.data && msgContainer) {
+            res.data.forEach(function(msg) {
+              msgContainer.appendChild(renderChatMessage(msg));
+            });
+            msgContainer.scrollTop = msgContainer.scrollHeight;
+          }
+        } catch(e) { console.error(e); }
+
+        chatSubscription = sb
+          .channel("room_" + roomId)
+          .on("postgres_changes", {
+            event: "INSERT",
+            schema: "public",
+            table: "chat_messages",
+            filter: "room_id=eq." + roomId,
+          }, function(payload) {
+            if (msgContainer && payload.new) {
+              msgContainer.appendChild(renderChatMessage(payload.new));
+              msgContainer.scrollTop = msgContainer.scrollHeight;
+            }
+          })
+          .subscribe();
+
+        showView("chat");
+        if ($("chatInput")) $("chatInput").focus();
+      }
+
+      async function renderChatList() {
+        var container = $("chatListContainer");
+        if (!container) return;
+        if (!currentUser) {
+          container.innerHTML =
+            '<div class="empty-state"><p>로그인 후 채팅을 확인할 수 있습니다.</p></div>';
+          return;
+        }
+
+        try {
+          var res = await sb
+            .from("chat_rooms")
+            .select("*")
+            .or("buyer_id.eq." + currentUser.id +
+                ",seller_id.eq." + currentUser.id)
+            .order("created_at", { ascending: false });
+          if (res.error) throw res.error;
+
+          chatRoomsCache = res.data || [];
+
+          if (chatRoomsCache.length === 0) {
+            container.innerHTML =
+              '<div class="empty-state">' +
+              '<p>진행 중인 채팅이 없습니다.</p></div>';
+            return;
+          }
+
+          container.innerHTML = "";
+          chatRoomsCache.forEach(function(room) {
+            var item = findById(room.listing_id);
+            var btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "listing-card";
+            btn.style.marginBottom = "0.5rem";
+
+            var myRole = currentUser.id === room.buyer_id
+              ? "매수자" : "판매자";
+
+            btn.innerHTML =
+              '<p class="card-name">' +
+              escapeHtml(item ? item.storeName : "삭제된 매물") +
+              '</p>' +
+              '<div class="card-meta">' +
+              (item ? '<span>' + escapeHtml(item.category) + '</span>' +
+              '<span>' + escapeHtml(item.region) + '</span>' : '') +
+              '</div>' +
+              '<p style="font-size:0.75rem;color:var(--muted);' +
+              'margin:0.3rem 0 0;">' + myRole + ' · ' +
+              new Date(room.created_at).toLocaleDateString("ko-KR") +
+              '</p>';
+
+            btn.addEventListener("click", function() {
+              if (item) {
+                openChatRoom(room.listing_id, room.id);
+              }
+            });
+            container.appendChild(btn);
+          });
+        } catch(e) { console.error(e); }
+      }
+
       function updateDetailInterestRow(listingId) {
         var btn = $("detailInterestBtn");
         var countEl = $("detailInterestCount");
@@ -4113,6 +4369,8 @@
         if (name === "myListings") $("viewMyListings").classList.add("active");
         if (name === "myInterests")
           $("viewMyInterests").classList.add("active");
+        if (name === "chat") $("viewChat").classList.add("active");
+        if (name === "chatList") $("viewChatList").classList.add("active");
         window.scrollTo(0, 0);
         if (name === "home") {
           syncHomeHeaderFromScroll();
@@ -4680,14 +4938,17 @@
         var loginBtn = $("navLogin");
         var logoutBtn = $("navLogout");
         var myListingsBtn = $("navMyListings");
+        var chatBtn = $("navChat");
         if (user) {
           if (loginBtn) loginBtn.classList.add("nav-auth-hidden");
           if (logoutBtn) logoutBtn.classList.remove("nav-auth-hidden");
           if (myListingsBtn) myListingsBtn.classList.remove("nav-auth-hidden");
+          if (chatBtn) chatBtn.classList.remove("nav-auth-hidden");
         } else {
           if (loginBtn) loginBtn.classList.remove("nav-auth-hidden");
           if (logoutBtn) logoutBtn.classList.add("nav-auth-hidden");
           if (myListingsBtn) myListingsBtn.classList.add("nav-auth-hidden");
+          if (chatBtn) chatBtn.classList.add("nav-auth-hidden");
         }
       }
 
@@ -5374,6 +5635,11 @@
           showView("myInterests");
         });
       });
+      $("navChat").addEventListener("click", function() {
+        renderChatList().then(function() {
+          showView("chatList");
+        });
+      });
 
       var homeSearchBtn = $("homeSearchBtn");
       var homeSearchInput = $("homeSearchInput");
@@ -5443,6 +5709,30 @@
           showView("myListings");
         });
       });
+      $("chatBack").addEventListener("click", function() {
+        if (chatSubscription) {
+          sb.removeChannel(chatSubscription);
+          chatSubscription = null;
+        }
+        renderChatList().then(function() {
+          showView("chatList");
+        });
+      });
+      $("chatSendBtn").addEventListener("click", async function() {
+        if (!currentRoomId) return;
+        var input = $("chatInput");
+        var content = input ? input.value.trim() : "";
+        if (!content) return;
+        input.value = "";
+        await sendChatMessage(currentRoomId, content);
+      });
+      if ($("chatInput")) {
+        $("chatInput").addEventListener("keydown", function(e) {
+          if (e.key !== "Enter") return;
+          e.preventDefault();
+          $("chatSendBtn").click();
+        });
+      }
       $("navLogout").addEventListener("click", async function () {
         await sb.auth.signOut();
         updateAuthUI(null);
@@ -5730,6 +6020,19 @@
           openInterestModal(id);
         });
       }
+      $("detailChatBtn").addEventListener("click", async function() {
+        var id = $("viewDetail") && $("viewDetail").dataset.currentId;
+        if (!id) return;
+        if (!currentUser) { openAuthModal(); return; }
+        var item = findById(id);
+        if (!item) return;
+        if (item.userId && item.userId === currentUser.id) {
+          alert("본인 매물에는 채팅할 수 없습니다.");
+          return;
+        }
+        var room = await getOrCreateChatRoom(id, item.userId);
+        if (room) openChatRoom(id, room.id);
+      });
 
       if ($("detailEditBtn")) {
         $("detailEditBtn").addEventListener("click", function () {
@@ -6104,6 +6407,15 @@
         var authModalEl = $("authModal");
         if (authModalEl && !authModalEl.hidden) {
           closeAuthModal();
+          return;
+        }
+        var chatViewEl = $("viewChat");
+        if (chatViewEl && chatViewEl.classList.contains("active")) {
+          if (chatSubscription) {
+            sb.removeChannel(chatSubscription);
+            chatSubscription = null;
+          }
+          renderChatList().then(function() { showView("chatList"); });
           return;
         }
         var modal = $("interestModal");
