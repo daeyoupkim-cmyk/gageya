@@ -1821,6 +1821,8 @@
         id="navLogin">로그인</button>
       <button type="button" class="btn btn-ghost nav-auth-hidden"
         id="navLogout">로그아웃</button>
+      <button type="button" class="btn btn-ghost"
+        id="navMyInterests">관심 매물</button>
       <button type="button" class="btn btn-ghost" id="navList">매물 보기</button>
       <button type="button" class="btn btn-primary" id="navRegister">매물 등록</button>
     </div>
@@ -2472,6 +2474,12 @@
       <p class="page-desc">내가 등록한 매물 목록입니다.</p>
       <div id="myListingsContainer" class="card-grid"></div>
     </section>
+    <section id="viewMyInterests" class="view"
+      aria-labelledby="myInterestsHeading">
+      <h1 id="myInterestsHeading" class="page-title">관심 매물</h1>
+      <p class="page-desc">관심 표명한 매물 목록입니다.</p>
+      <div id="myInterestsContainer" class="card-grid"></div>
+    </section>
     </div>
   </main>
 
@@ -2818,6 +2826,7 @@
       var MAX_LISTING_PHOTOS = 5;
       var currentUser = null;
       var DRAFT_KEY = "gageya_register_draft";
+      var INTEREST_KEY = "gageya_interests";
 
       function rowToListing(row) {
         if (!row) return null;
@@ -3815,6 +3824,26 @@
         }
       }
 
+      function saveInterestRecord(listingId) {
+        try {
+          var raw = localStorage.getItem(INTEREST_KEY);
+          var list = raw ? JSON.parse(raw) : [];
+          if (list.indexOf(listingId) === -1) {
+            list.push(listingId);
+            localStorage.setItem(INTEREST_KEY, JSON.stringify(list));
+          }
+        } catch (e) {}
+      }
+
+      function getInterestRecords() {
+        try {
+          var raw = localStorage.getItem(INTEREST_KEY);
+          return raw ? JSON.parse(raw) : [];
+        } catch (e) {
+          return [];
+        }
+      }
+
       function updateDetailInterestRow(listingId) {
         var btn = $("detailInterestBtn");
         var countEl = $("detailInterestCount");
@@ -4082,6 +4111,8 @@
         }
         if (name === "detail") $("viewDetail").classList.add("active");
         if (name === "myListings") $("viewMyListings").classList.add("active");
+        if (name === "myInterests")
+          $("viewMyInterests").classList.add("active");
         window.scrollTo(0, 0);
         if (name === "home") {
           syncHomeHeaderFromScroll();
@@ -4705,6 +4736,115 @@
         });
       }
 
+      async function renderMyInterests() {
+        var container = $("myInterestsContainer");
+        if (!container) return;
+
+        var ids = getInterestRecords();
+        if (ids.length === 0) {
+          container.innerHTML =
+            '<div class="empty-state">' +
+            '<p>관심 표명한 매물이 없습니다.</p>' +
+            '<button type="button" class="btn btn-primary" ' +
+            'id="myInterestsGoListBtn">매물 보러가기</button></div>';
+          var goBtn = $("myInterestsGoListBtn");
+          if (goBtn) goBtn.addEventListener("click", function() {
+            renderList().then(function() { showView("list"); });
+          });
+          return;
+        }
+
+        var found = [];
+        var missing = [];
+        ids.forEach(function(id) {
+          var item = findById(id);
+          if (item) found.push(item);
+          else missing.push(id);
+        });
+
+        if (missing.length > 0) {
+          var cleaned = ids.filter(function(id) {
+            return missing.indexOf(id) === -1;
+          });
+          try {
+            localStorage.setItem(INTEREST_KEY, JSON.stringify(cleaned));
+          } catch(e) {}
+        }
+
+        if (found.length === 0) {
+          container.innerHTML =
+            '<div class="empty-state">' +
+            '<p>관심 표명한 매물이 모두 삭제되었습니다.</p></div>';
+          return;
+        }
+
+        container.innerHTML = "";
+        found.forEach(function(item) {
+          var st = normalizeListingStatus(item);
+          var photoUrl = getFirstListingPhotoUrl(item);
+          var btn = document.createElement("button");
+          btn.type = "button";
+          btn.className =
+            "listing-card" +
+            (st === "sold" ? " listing-card--sold" : "");
+
+          var statusBadge = st === "negotiating"
+            ? '<span class="card-status-corner listing-status-badge--negotiating">협의중</span>'
+            : st === "sold"
+            ? '<span class="card-status-corner listing-status-badge--sold">거래완료</span>'
+            : "";
+
+          if (photoUrl) {
+            btn.classList.add("listing-card--has-photo");
+            if (st !== "available") btn.classList.add("listing-card--has-status");
+            var pwrap = document.createElement("div");
+            pwrap.className = "card-photo-wrap";
+            var pimg = document.createElement("img");
+            pimg.src = photoUrl;
+            pimg.alt = "";
+            pimg.loading = "lazy";
+            pwrap.appendChild(pimg);
+            btn.appendChild(pwrap);
+            var body = document.createElement("div");
+            body.className = "listing-card--body";
+            body.innerHTML =
+              statusBadge +
+              '<p class="card-name"></p>' +
+              '<div class="card-meta"></div>' +
+              '<div class="card-price"></div>' +
+              '<p style="font-size:0.72rem;font-weight:600;' +
+              'color:var(--orange);margin:0.35rem 0 0;">관심 표명 완료 ✓</p>';
+            btn.appendChild(body);
+            body.querySelector(".card-name").textContent = item.storeName;
+            body.querySelector(".card-meta").innerHTML =
+              "<span>" + escapeHtml(item.category) + "</span>" +
+              "<span>" + escapeHtml(item.region) + "</span>";
+            body.querySelector(".card-price").textContent =
+              formatPriceDisplay(item.price);
+          } else {
+            if (st !== "available") btn.classList.add("listing-card--has-status");
+            btn.innerHTML =
+              statusBadge +
+              '<p class="card-name"></p>' +
+              '<div class="card-meta"></div>' +
+              '<div class="card-price"></div>' +
+              '<p style="font-size:0.72rem;font-weight:600;' +
+              'color:var(--orange);margin:0.35rem 0 0;">관심 표명 완료 ✓</p>';
+            btn.querySelector(".card-name").textContent = item.storeName;
+            btn.querySelector(".card-meta").innerHTML =
+              "<span>" + escapeHtml(item.category) + "</span>" +
+              "<span>" + escapeHtml(item.region) + "</span>";
+            btn.querySelector(".card-price").textContent =
+              formatPriceDisplay(item.price);
+          }
+
+          btn.addEventListener("click", function() {
+            openDetail(item.id).catch(console.error);
+          });
+          container.appendChild(btn);
+        });
+      }
+
       function findById(id) {
         for (var i = 0; i < listingsCache.length; i++) {
           if (listingsCache[i].id === id) return listingsCache[i];
@@ -5228,6 +5368,11 @@
           .catch(function (err) {
             console.error(err);
           });
+      });
+      $("navMyInterests").addEventListener("click", function() {
+        renderMyInterests().then(function() {
+          showView("myInterests");
+        });
       });
 
       var homeSearchBtn = $("homeSearchBtn");
@@ -5912,6 +6057,7 @@
             return;
           }
           await recordInterestSubmission(listingId);
+          saveInterestRecord(listingId);
           var interestItem = findById(listingId);
           if (
             interestItem &&
