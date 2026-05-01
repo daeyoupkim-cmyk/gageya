@@ -5923,20 +5923,6 @@
               console.error(eEmail);
             }
           }
-          if (interestItem) {
-            var buyerEmail = $("interestBuyerContact").value.trim();
-            var isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(buyerEmail);
-            if (isEmail) {
-              try {
-                await emailjs.send("service_pv3ohtd", "template_jhfq2ah", {
-                  store_name: interestItem.storeName,
-                  buyer_email: buyerEmail,
-                });
-              } catch (eBuyer) {
-                console.error(eBuyer);
-              }
-            }
-          }
           $("interestModalStepForm").hidden = true;
           $("interestModalStepSuccess").hidden = false;
           updateDetailInterestRow(listingId);
