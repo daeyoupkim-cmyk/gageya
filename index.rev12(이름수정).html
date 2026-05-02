@@ -4278,6 +4278,11 @@
         } catch (e) {}
       }
 
+      function hasInterestRecord(listingId) {
+        var ids = getInterestRecords();
+        return ids.indexOf(listingId) !== -1;
+      }
+
       function getInterestRecords() {
         try {
           var raw = localStorage.getItem(INTEREST_KEY);
@@ -5976,6 +5981,18 @@
         }
         $("viewDetail").dataset.currentId = id;
         updateDetailInterestRow(id);
+        var interestBtn = $("detailInterestBtn");
+        if (interestBtn) {
+          if (hasInterestRecord(id)) {
+            interestBtn.disabled = true;
+            interestBtn.textContent = "관심 표명 완료 ✓";
+            interestBtn.style.background = "var(--navy)";
+          } else {
+            interestBtn.disabled = false;
+            interestBtn.textContent = "관심 있어요";
+            interestBtn.style.background = "";
+          }
+        }
         var vc = $("detailViewCount");
         if (vc) vc.textContent = "조회 " + getViewCount(id) + "회";
         applyDetailStatusUI(item);
@@ -6556,6 +6573,7 @@
 
       $("detailInterestBtn").addEventListener("click", async function() {
         var id = $("viewDetail") && $("viewDetail").dataset.currentId;
+        if (hasInterestRecord(id)) return;
         if (!id) return;
         var cur = findById(id);
         if (cur && normalizeListingStatus(cur) === "sold") return;
