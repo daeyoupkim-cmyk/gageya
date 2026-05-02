@@ -6361,25 +6361,6 @@
           }
           await recordInterestSubmission(listingId);
           saveInterestRecord(listingId);
-          var interestItem = findById(listingId);
-          if (
-            interestItem &&
-            interestItem.sellerEmail != null &&
-            String(interestItem.sellerEmail).trim() !== ""
-          ) {
-            try {
-              await emailjs.send("service_pv3ohtd", "template_7zaej86", {
-                store_name: interestItem.storeName,
-                seller_email: String(interestItem.sellerEmail).trim(),
-                buyer_name: buyerName,
-                buyer_contact: buyerContact,
-                buyer_intro: $("interestBuyerIntro").value.trim() || "없음",
-                buyer_budget: $("interestBuyerBudget").value.trim() || "없음",
-              });
-            } catch (eEmail) {
-              console.error(eEmail);
-            }
-          }
           $("interestModalStepForm").hidden = true;
           $("interestModalStepSuccess").hidden = false;
           updateDetailInterestRow(listingId);
