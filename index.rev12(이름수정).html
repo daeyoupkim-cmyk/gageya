@@ -5799,32 +5799,6 @@
               escapeHtml(item.region) +
               "</span>";
             body.querySelector(".card-price").textContent = formatPriceDisplay(item.price);
-            var statsHtml = "";
-            if (item.monthlyRevenue != null && item.monthlyRevenue > 0) {
-              statsHtml +=
-                '<span>매출 ' + formatManWon(item.monthlyRevenue) +
-                '만</span>';
-            }
-            var adjP = getAdjustedMonthlyProfitFromItem(item);
-            if (adjP != null && adjP > 0) {
-              statsHtml +=
-                '<span>영업이익 ' + formatManWon(Math.round(adjP)) +
-                '만</span>';
-            }
-            if (statsHtml) {
-              var statsRow = document.createElement("div");
-              statsRow.style.cssText =
-                "display:flex;flex-wrap:wrap;gap:0.35rem;" +
-                "margin-top:0.3rem;";
-              statsRow.innerHTML = statsHtml
-                .replace(/<span>/g,
-                  '<span style="font-size:0.72rem;font-weight:600;' +
-                  'color:var(--muted);background:var(--bg);' +
-                  'padding:0.15rem 0.4rem;border-radius:var(--radius);' +
-                  'border:1px solid var(--border);">');
-              body.querySelector(".card-price")
-                .insertAdjacentElement("afterend", statsRow);
-            }
             var ic1 = getInterestCount(item.id);
             var interestLine1 = body.querySelector(".card-interest-count");
             if (ic1 >= 1) {
@@ -5855,32 +5829,6 @@
               escapeHtml(item.region) +
               "</span>";
             btn.querySelector(".card-price").textContent = formatPriceDisplay(item.price);
-            var statsHtml = "";
-            if (item.monthlyRevenue != null && item.monthlyRevenue > 0) {
-              statsHtml +=
-                '<span>매출 ' + formatManWon(item.monthlyRevenue) +
-                '만</span>';
-            }
-            var adjP = getAdjustedMonthlyProfitFromItem(item);
-            if (adjP != null && adjP > 0) {
-              statsHtml +=
-                '<span>영업이익 ' + formatManWon(Math.round(adjP)) +
-                '만</span>';
-            }
-            if (statsHtml) {
-              var statsRow = document.createElement("div");
-              statsRow.style.cssText =
-                "display:flex;flex-wrap:wrap;gap:0.35rem;" +
-                "margin-top:0.3rem;";
-              statsRow.innerHTML = statsHtml
-                .replace(/<span>/g,
-                  '<span style="font-size:0.72rem;font-weight:600;' +
-                  'color:var(--muted);background:var(--bg);' +
-                  'padding:0.15rem 0.4rem;border-radius:var(--radius);' +
-                  'border:1px solid var(--border);">');
-              btn.querySelector(".card-price")
-                .insertAdjacentElement("afterend", statsRow);
-            }
             var ic2 = getInterestCount(item.id);
             var interestLine2 = btn.querySelector(".card-interest-count");
             if (ic2 >= 1) {
