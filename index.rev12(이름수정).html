@@ -1920,7 +1920,7 @@
             border-radius:999px;padding:0.1rem 0.4rem;
             margin-left:0.3rem;">0</span>
       </button>
-      <button type="button" class="btn btn-ghost"
+      <button type="button" class="btn btn-ghost nav-auth-hidden"
         id="navMyInterests">관심 매물</button>
       <button type="button" class="btn btn-ghost" id="navList">매물 보기</button>
       <button type="button" class="btn btn-primary" id="navRegister">매물 등록</button>
@@ -5204,16 +5204,19 @@
         var loginBtn = $("navLogin");
         var logoutBtn = $("navLogout");
         var myListingsBtn = $("navMyListings");
+        var myInterestsBtn = $("navMyInterests");
         var chatBtn = $("navChat");
         if (user) {
           if (loginBtn) loginBtn.classList.add("nav-auth-hidden");
           if (logoutBtn) logoutBtn.classList.remove("nav-auth-hidden");
           if (myListingsBtn) myListingsBtn.classList.remove("nav-auth-hidden");
+          if (myInterestsBtn) myInterestsBtn.classList.remove("nav-auth-hidden");
           if (chatBtn) chatBtn.classList.remove("nav-auth-hidden");
         } else {
           if (loginBtn) loginBtn.classList.remove("nav-auth-hidden");
           if (logoutBtn) logoutBtn.classList.add("nav-auth-hidden");
           if (myListingsBtn) myListingsBtn.classList.add("nav-auth-hidden");
+          if (myInterestsBtn) myInterestsBtn.classList.add("nav-auth-hidden");
           if (chatBtn) chatBtn.classList.add("nav-auth-hidden");
         }
       }
