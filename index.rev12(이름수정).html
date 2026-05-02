@@ -5941,14 +5941,38 @@
         }
         var delWrap = $("detailDeleteWrap");
         var manageGate = $("detailManagePinGate");
+        // 로그인한 사용자가 매물 등록자인지 확인
+        var isOwnerByLogin = currentUser &&
+          item.userId && item.userId === currentUser.id;
+        // 기존 PIN 방식도 유지 (로그인 없이 등록한 매물)
         var hasPin = hasLocalDeletePin(id);
+        var isOwner = isOwnerByLogin || hasPin;
+
         if (delWrap) {
-          delWrap.hidden = !hasPin;
+          delWrap.hidden = !isOwner;
         }
         if (manageGate) {
-          manageGate.hidden = hasPin;
-          if ($("detailManagePinInline")) $("detailManagePinInline").hidden = true;
-          if ($("detailManagePinInput")) $("detailManagePinInput").value = "";
+          // 로그인 오너이거나 PIN 있으면 관리 게이트 숨김
+          // 로그인했지만 본인 매물 아니면 완전히 숨김
+          if (isOwnerByLogin || hasPin) {
+            manageGate.hidden = true;
+          } else if (currentUser && !isOwnerByLogin) {
+            // 로그인은 했지만 본인 매물 아님 → 완전 숨김
+            manageGate.hidden = true;
+          } else {
+            // 비로그인 → 기존 PIN 게이트 표시
+            manageGate.hidden = false;
+          }
+          if ($("detailManagePinInline"))
+            $("detailManagePinInline").hidden = true;
+          if ($("detailManagePinInput"))
+            $("detailManagePinInput").value = "";
+        }
+
+        // 채팅 버튼은 본인 매물이면 숨김
+        var chatBtn = $("detailChatBtn");
+        if (chatBtn) {
+          chatBtn.hidden = isOwner;
         }
         $("viewDetail").dataset.currentId = id;
         updateDetailInterestRow(id);
