@@ -1974,6 +1974,35 @@
       border-bottom: none;
     }
 
+    .badge-3month {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 0.2rem 0.5rem;
+      border-radius: var(--radius);
+      background: rgba(22, 101, 52, 0.12);
+      color: #166534;
+      border: 1px solid rgba(22, 101, 52, 0.35);
+    }
+
+    .badge-6month {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 0.25rem 0.6rem;
+      border-radius: 999px;
+      background: linear-gradient(
+        135deg, #1a3a8f 0%, #f04e23 100%);
+      color: #fff;
+      border: none;
+      box-shadow: 0 2px 6px rgba(26,58,143,0.25);
+      letter-spacing: 0.02em;
+    }
+
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 </head>
@@ -2344,54 +2373,24 @@
 
         <p class="section-label">가치 추정 (참고)</p>
         <div class="field">
-          <label for="monthlyRevenue">월 평균 매출 (만 원)</label>
-          <input type="number" id="monthlyRevenue" name="monthlyRevenue" min="0" step="1" inputmode="numeric" placeholder="예: 3000" />
-          <p class="field-hint">숫자만 입력합니다. 추정 계산에는 직접 쓰이지 않고 참고용으로 표시됩니다.</p>
-        </div>
-
-        <div class="val-field-block">
-          <span class="val-block-label">이익 입력 방식</span>
-          <div class="val-option-row" role="radiogroup" aria-label="이익 입력 방식">
-            <input type="radio" name="profitInputMode" id="profitInputModeMonthly" value="monthly" class="val-radio-input" checked />
-            <label class="val-option" for="profitInputModeMonthly">월 평균 입력</label>
-            <input type="radio" name="profitInputMode" id="profitInputModeSix" value="sixMonth" class="val-radio-input" />
-            <label class="val-option" for="profitInputModeSix">최근 6개월 합계 입력</label>
+          <label>월별 매출·영업이익
+            <span aria-hidden="true">*</span>
+          </label>
+          <p class="field-hint" style="margin-bottom:0.65rem;">
+            최소 1개월 이상 입력 필수입니다.
+            최근 월부터 순서대로 입력해 주세요.<br/>
+            3개월 이상 → 실적 공개 배지,
+            6개월 입력 → 프리미엄 배지가 표시됩니다.
+          </p>
+          <div id="monthlyDataRows"
+            style="display:flex;flex-direction:column;gap:0.5rem;">
           </div>
-          <div id="monthlyProfitWrap" class="val-subfield field">
-            <label for="monthlyProfit">월 평균 영업이익 (만 원)</label>
-            <p class="field-hint">
-              매출에서 임대료·재료비·인건비를 뺀 후
-              내 손에 남는 금액입니다. (세금 납부 전 기준)
-            </p>
-            <input type="number" id="monthlyProfit" name="monthlyProfit" min="0" step="1" inputmode="numeric" placeholder="예: 200" />
-          </div>
-          <div id="sixMonthProfitWrap" class="val-subfield field" hidden>
-            <label for="sixMonthProfit">최근 6개월 영업이익 합계 (만 원)</label>
-            <p class="field-hint">
-              매출에서 임대료·재료비·인건비를 뺀 후
-              내 손에 남는 금액의 6개월 합계입니다.
-              (세금 납부 전 기준) 월평균 = 합계 ÷ 6으로
-              자동 반영됩니다.
-            </p>
-            <input type="number" id="sixMonthProfit" name="sixMonthProfit" min="0" step="1" inputmode="numeric" placeholder="예: 1200" />
-          </div>
-
-          <div class="field">
-            <label>월별 매출·영업이익 (선택)</label>
-            <p class="field-hint" style="margin-bottom:0.65rem;">
-              입력하면 매물에 📊 배지가 표시되어 신뢰도가 높아집니다.
-              최근 월부터 순서대로 입력해 주세요.
-            </p>
-            <div id="monthlyDataRows"
-              style="display:flex;flex-direction:column;gap:0.5rem;">
-            </div>
-            <button type="button" class="btn btn-ghost"
-              id="addMonthlyDataBtn"
-              style="margin-top:0.5rem;font-size:0.82rem;">
-              + 월 추가
-            </button>
-            <p class="field-hint">최대 6개월까지 입력 가능합니다.</p>
-          </div>
+          <button type="button" class="btn btn-ghost"
+            id="addMonthlyDataBtn"
+            style="margin-top:0.5rem;font-size:0.82rem;">
+            + 월 추가
+          </button>
+          <p class="field-hint">최대 6개월까지 입력 가능합니다.</p>
         </div>
 
         <div class="val-field-block">
@@ -3425,6 +3424,23 @@
         return adj;
       }
 
+      function getMonthlyDataBadge(item) {
+        if (!item.monthlyData || item.monthlyData.length === 0)
+          return null;
+        var count = item.monthlyData.filter(function(d) {
+          return d.revenue != null || d.profit != null;
+        }).length;
+        if (count >= 6) return {
+          cls: "badge-6month",
+          text: "✨ 6개월 실적 공개",
+        };
+        if (count >= 3) return {
+          cls: "badge-3month",
+          text: "📊 " + count + "개월 실적 공개",
+        };
+        return null;
+      }
+
       function computeValuationDetails(item) {
         var n = normalizeValuationItem(item);
         if (!n || !n.category) return null;
@@ -3710,13 +3726,41 @@
         return Math.min(vd.dcfPrice, vd.multiplePrice);
       }
 
+      function getPendingMonthlyDataDerived() {
+        var validData = pendingMonthlyData.filter(function(d) {
+          return d.revenue != null || d.profit != null;
+        });
+        var avgRevenue = null;
+        var revenueData = validData.filter(function(d) {
+          return d.revenue != null;
+        });
+        if (revenueData.length > 0) {
+          avgRevenue =
+            revenueData.reduce(function(s, d) {
+              return s + d.revenue;
+            }, 0) / revenueData.length;
+        }
+        var avgProfit = null;
+        var profitData = validData.filter(function(d) {
+          return d.profit != null;
+        });
+        if (profitData.length > 0) {
+          avgProfit =
+            profitData.reduce(function(s, d) {
+              return s + d.profit;
+            }, 0) / profitData.length;
+        }
+        return {
+          validData: validData,
+          avgRevenue: avgRevenue,
+          avgProfit: avgProfit,
+        };
+      }
+
       function buildValuationItemFromForm() {
-        var profitMode =
-          (document.querySelector('input[name="profitInputMode"]:checked') || {}).value || "monthly";
-        var monthlyProfitRaw = $("monthlyProfit") ? $("monthlyProfit").value.trim() : "";
-        var sixRaw = $("sixMonthProfit") ? $("sixMonthProfit").value.trim() : "";
-        var monthlyProfit = monthlyProfitRaw === "" ? null : parseFloat(monthlyProfitRaw);
-        var sixMonthProfit = sixRaw === "" ? null : parseFloat(sixRaw);
+        var derived = getPendingMonthlyDataDerived();
+        var monthlyProfit = derived.avgProfit;
+        var sixMonthProfit = null;
         var ow =
           (document.querySelector('input[name="ownerWorks"]:checked') || {}).value === "yes";
         var ohRaw = $("ownerWorkHours") ? $("ownerWorkHours").value.trim() : "";
@@ -3727,7 +3771,7 @@
         var staffCount = staffRaw === "" ? 0 : parseInt(staffRaw, 10);
         return {
           category: $("category") ? $("category").value : "",
-          profitInputMode: profitMode,
+          profitInputMode: "monthly",
           monthlyProfit: monthlyProfit,
           sixMonthProfit: sixMonthProfit,
           revenueTrend: (document.querySelector('input[name="revenueTrend"]:checked') || {}).value || "stable",
@@ -4212,7 +4256,7 @@
           formatManWon(high) +
           "</span>만 원";
 
-        var rev = parseOptionalInt($("monthlyRevenue"));
+        var rev = getPendingMonthlyDataDerived().avgRevenue;
         var keyInc = $("keyMoneyIncluded").checked;
         var leaseM = parseOptionalInt($("leaseRemainingMonths"));
 
@@ -5831,14 +5875,14 @@
               interestLine1.hidden = false;
               interestLine1.textContent = "관심 " + ic1 + "명";
             }
-            var hasMonthlyData = item.monthlyData &&
-              item.monthlyData.length > 0;
-            if (hasMonthlyData) {
-              var badge = document.createElement("p");
-              badge.className = "monthly-data-badge";
-              badge.style.marginTop = "0.35rem";
-              badge.innerHTML = "📊 월별 매출·영업이익 공개";
-              body.appendChild(badge);
+            var badge = getMonthlyDataBadge(item);
+            if (badge) {
+              var badgeEl = document.createElement("p");
+              badgeEl.className = badge.cls;
+              badgeEl.style.marginTop = "0.35rem";
+              badgeEl.style.display = "inline-flex";
+              badgeEl.textContent = badge.text;
+              body.appendChild(badgeEl);
             }
           } else {
             btn.innerHTML =
@@ -5887,14 +5931,14 @@
               interestLine2.hidden = false;
               interestLine2.textContent = "관심 " + ic2 + "명";
             }
-            var hasMonthlyData = item.monthlyData &&
-              item.monthlyData.length > 0;
-            if (hasMonthlyData) {
-              var badge = document.createElement("p");
-              badge.className = "monthly-data-badge";
-              badge.style.marginTop = "0.35rem";
-              badge.innerHTML = "📊 월별 매출·영업이익 공개";
-              btn.appendChild(badge);
+            var badge = getMonthlyDataBadge(item);
+            if (badge) {
+              var badgeEl = document.createElement("p");
+              badgeEl.className = badge.cls;
+              badgeEl.style.marginTop = "0.35rem";
+              badgeEl.style.display = "inline-flex";
+              badgeEl.textContent = badge.text;
+              btn.appendChild(badgeEl);
             }
           }
           btn.addEventListener("click", function () {
@@ -6481,13 +6525,18 @@
         }
 
         if (item.monthlyData && item.monthlyData.length > 0) {
+          var detailBadge = getMonthlyDataBadge(item);
+          var detailBadgeHtml = detailBadge
+            ? '<span class="' + detailBadge.cls + '">' +
+              escapeHtml(detailBadge.text) + "</span>"
+            : "";
           var tableHtml =
             '<div style="display:flex;align-items:center;' +
             'gap:0.5rem;margin-bottom:0.65rem;">' +
             '<h2 style="margin:0;font-size:0.8rem;font-weight:700;' +
             'color:var(--navy);text-transform:uppercase;' +
             'letter-spacing:0.06em;">월별 매출·영업이익</h2>' +
-            '<span class="monthly-data-badge">📊 공개</span>' +
+            detailBadgeHtml +
             '</div>' +
             '<table class="monthly-data-table">' +
             '<thead><tr>' +
@@ -6632,16 +6681,6 @@
         var contact = $("contact").value.trim();
         var sellerEmail = $("sellerEmail") ? $("sellerEmail").value.trim() : "";
 
-        var monthlyRevenue = parseOptionalInt($("monthlyRevenue"));
-        var vForm = buildValuationItemFromForm();
-        var monthlyProfit = vForm.monthlyProfit;
-        if (monthlyProfit != null && (isNaN(monthlyProfit) || monthlyProfit < 0)) {
-          monthlyProfit = null;
-        }
-        var sixMonthProfit = vForm.sixMonthProfit;
-        if (sixMonthProfit != null && (isNaN(sixMonthProfit) || sixMonthProfit < 0)) {
-          sixMonthProfit = null;
-        }
         var keyMoneyIncluded = $("keyMoneyIncluded").checked;
         var leaseRemainingMonths = parseOptionalInt($("leaseRemainingMonths"));
 
@@ -6665,11 +6704,47 @@
           return;
         }
 
+        var validMonthlyData = pendingMonthlyData.filter(
+          function(d) {
+            return d.revenue != null || d.profit != null;
+          }
+        );
+        if (validMonthlyData.length === 0) {
+          alert("월별 매출·영업이익을 최소 1개월 이상 입력해 주세요.");
+          return;
+        }
+
         var pinRaw = $("listingDeletePin") ? $("listingDeletePin").value.trim() : "";
         if (pinRaw !== "" && !/^\d{4}$/.test(pinRaw)) {
           alert("삭제 비밀번호는 숫자 4자리만 입력하거나 비워 두세요.");
           return;
         }
+
+        var validData = pendingMonthlyData.filter(function(d) {
+          return d.revenue != null || d.profit != null;
+        });
+
+        var avgRevenue = null;
+        var revenueData = validData.filter(function(d) {
+          return d.revenue != null;
+        });
+        if (revenueData.length > 0) {
+          avgRevenue = revenueData.reduce(function(s, d) {
+            return s + d.revenue;
+          }, 0) / revenueData.length;
+        }
+
+        var avgProfit = null;
+        var profitData = validData.filter(function(d) {
+          return d.profit != null;
+        });
+        if (profitData.length > 0) {
+          avgProfit = profitData.reduce(function(s, d) {
+            return s + d.profit;
+          }, 0) / profitData.length;
+        }
+
+        var vForm = buildValuationItemFromForm();
 
         var newItem = {
           id: uuid(),
@@ -6680,10 +6755,10 @@
           description: description,
           contact: contact,
           sellerEmail: sellerEmail,
-          monthlyRevenue: monthlyRevenue,
-          monthlyProfit: monthlyProfit,
-          profitInputMode: vForm.profitInputMode,
-          sixMonthProfit: sixMonthProfit,
+          monthlyRevenue: avgRevenue,
+          monthlyProfit: avgProfit,
+          profitInputMode: "monthly",
+          sixMonthProfit: null,
           revenueTrend: vForm.revenueTrend,
           ownerWorks: vForm.ownerWorks,
           ownerWorkHours: vForm.ownerWorkHours,
@@ -6699,9 +6774,7 @@
           leaseRemainingMonths: leaseRemainingMonths,
           createdAt: Date.now(),
           userId: currentUser ? currentUser.id : null,
-          monthlyData: pendingMonthlyData.filter(function(d) {
-            return d.revenue != null || d.profit != null;
-          }),
+          monthlyData: validData,
         };
         if (pendingRegisterPhotos.length > 0) {
           newItem.photos = pendingRegisterPhotos.slice();
