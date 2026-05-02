@@ -4340,9 +4340,10 @@
           var permission = await Notification.requestPermission();
           if (permission !== "granted") return;
 
+          var convertedKey = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
           var subscription = await reg.pushManager.subscribe({
             userVisibleOnly: true,
-            applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+            applicationServerKey: convertedKey,
           });
 
           await sb.from("push_subscriptions").upsert({
