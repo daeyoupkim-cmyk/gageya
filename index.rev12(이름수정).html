@@ -2145,7 +2145,7 @@
           <div class="filter-toggle-row">
             <input type="checkbox" id="filterUndervalued" />
             <label for="filterUndervalued">추정가보다 저렴한 매물만</label>
-            <p class="filter-toggle-hint">희망가격이 보수적 추정가보다 낮은 매물</p>
+            <p class="filter-toggle-hint">희망가격이 보수적·적정 추정가 평균보다 낮은 매물</p>
           </div>
           <div class="filter-toggle-row">
             <input type="checkbox" id="filterHasPhotos" />
@@ -3922,9 +3922,12 @@
 
           if (undervalued) {
             var hope = parseHopePriceToManWon(item.price);
-            var cons = getConservativeValuation(item);
-            if (hope == null || !isFinite(hope) || cons == null || !isFinite(cons)) return false;
-            if (!(hope < cons)) return false;
+            var vd = computeValuationDetails(item);
+            if (hope == null || !isFinite(hope) || !vd) return false;
+            var low = Math.min(vd.dcfPrice, vd.multiplePrice);
+            var high = Math.max(vd.dcfPrice, vd.multiplePrice);
+            var avg = (low + high) / 2;
+            if (!(hope < avg)) return false;
           }
 
           if (photosOnly && getListingPhotos(item).length === 0) return false;
