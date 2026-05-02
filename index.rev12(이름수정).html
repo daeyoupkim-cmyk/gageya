@@ -5682,6 +5682,7 @@
               var v = revenueInput.value.trim();
               pendingMonthlyData[idx].revenue =
                 v === "" ? null : parseFloat(v);
+              syncRegionField();
               updateValuationUI();
             });
             profitInput.addEventListener("input", function() {
@@ -5701,6 +5702,7 @@
             rmBtn.addEventListener("click", function() {
               pendingMonthlyData.splice(idx, 1);
               renderMonthlyDataRows();
+              updateValuationUI();
               updateAddMonthlyBtn();
             });
 
@@ -5736,6 +5738,7 @@
             profit: null,
           });
           renderMonthlyDataRows();
+          updateValuationUI();
           updateAddMonthlyBtn();
         });
       }
