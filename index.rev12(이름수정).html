@@ -2517,7 +2517,7 @@
 
         <div class="valuation-panel" id="valuationPanel" aria-live="polite">
           <h3>자동 추정가 (만 원)</h3>
-          <p class="valuation-placeholder" id="valuationPlaceholder">업종을 선택하고 월 영업이익을 입력하면 추정 범위가 표시됩니다.</p>
+          <p class="valuation-placeholder" id="valuationPlaceholder">업종을 선택하고 월별 영업이익을 입력하면 추정 범위가 표시됩니다.</p>
           <p class="valuation-range" id="valuationRange" hidden></p>
           <ul class="valuation-breakdown" id="valuationBreakdown" hidden></ul>
           <p style="font-size: 0.72rem; color: var(--muted); margin-top: 0.65rem; line-height: 1.5">
@@ -3758,9 +3758,28 @@
       }
 
       function buildValuationItemFromForm() {
-        var derived = getPendingMonthlyDataDerived();
-        var monthlyProfit = derived.avgProfit;
-        var sixMonthProfit = null;
+        // 월별 데이터에서 평균 영업이익 자동 계산
+        var profitData = pendingMonthlyData.filter(function(d) {
+          return d.profit != null && d.profit > 0;
+        });
+        var monthlyProfit = null;
+        if (profitData.length > 0) {
+          monthlyProfit = profitData.reduce(function(s, d) {
+            return s + d.profit;
+          }, 0) / profitData.length;
+        }
+
+        // 월별 데이터에서 평균 매출 자동 계산
+        var revenueData = pendingMonthlyData.filter(function(d) {
+          return d.revenue != null && d.revenue > 0;
+        });
+        var monthlyRevenue = null;
+        if (revenueData.length > 0) {
+          monthlyRevenue = revenueData.reduce(function(s, d) {
+            return s + d.revenue;
+          }, 0) / revenueData.length;
+        }
+
         var ow =
           (document.querySelector('input[name="ownerWorks"]:checked') || {}).value === "yes";
         var ohRaw = $("ownerWorkHours") ? $("ownerWorkHours").value.trim() : "";
@@ -3771,9 +3790,9 @@
         var staffCount = staffRaw === "" ? 0 : parseInt(staffRaw, 10);
         return {
           category: $("category") ? $("category").value : "",
-          profitInputMode: "monthly",
           monthlyProfit: monthlyProfit,
-          sixMonthProfit: sixMonthProfit,
+          sixMonthProfit: null,
+          profitInputMode: "monthly",
           revenueTrend: (document.querySelector('input[name="revenueTrend"]:checked') || {}).value || "stable",
           ownerWorks: ow,
           ownerWorkHours: ownerWorkHours,
@@ -4228,7 +4247,7 @@
           placeholder.hidden = false;
           rangeEl.hidden = true;
           listEl.hidden = true;
-          placeholder.textContent = "업종을 선택하고 이익 정보를 입력하면 추정 범위가 표시됩니다.";
+          placeholder.textContent = "업종을 선택하고 월별 영업이익을 입력하면 추정 범위가 표시됩니다.";
           return;
         }
 
@@ -5635,11 +5654,13 @@
               var v = revenueInput.value.trim();
               pendingMonthlyData[idx].revenue =
                 v === "" ? null : parseFloat(v);
+              updateValuationUI();
             });
             profitInput.addEventListener("input", function() {
               var v = profitInput.value.trim();
               pendingMonthlyData[idx].profit =
                 v === "" ? null : parseFloat(v);
+              updateValuationUI();
             });
 
             var rmBtn = document.createElement("button");
