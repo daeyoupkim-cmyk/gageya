@@ -2676,6 +2676,24 @@
             </div>
           </div>
         </div>
+        <div id="detailMapWrap"
+          style="margin-top:1rem;padding-top:1rem;
+            border-top:1px solid var(--border);" hidden>
+          <h2 style="font-size:0.8rem;font-weight:700;
+            color:var(--navy);text-transform:uppercase;
+            letter-spacing:0.06em;margin:0 0 0.65rem;">
+            매물 위치
+          </h2>
+          <div id="detailMap"
+            style="width:100%;height:280px;
+              border-radius:var(--radius);
+              border:1px solid var(--border);
+              overflow:hidden;">
+          </div>
+          <p id="detailMapAddr"
+            style="margin:0.45rem 0 0;font-size:0.8rem;
+              color:var(--muted);"></p>
+        </div>
         <div class="detail-delete-wrap" id="detailDeleteWrap" hidden>
           <div class="detail-owner-actions">
             <button type="button" class="btn btn-outline" id="detailEditBtn">매물 수정</button>
@@ -4486,6 +4504,79 @@
         });
       }
 
+      function renderDetailMap(region) {
+        var wrap = $("detailMapWrap");
+        var container = $("detailMap");
+        var addrEl = $("detailMapAddr");
+        if (!wrap || !container) return;
+
+        if (!region || !region.trim()) {
+          wrap.hidden = true;
+          return;
+        }
+
+        // 카카오맵 로드 확인
+        if (typeof kakao === "undefined" ||
+            !kakao.maps || !kakao.maps.services) {
+          wrap.hidden = true;
+          return;
+        }
+
+        wrap.hidden = false;
+
+        var geocoder = new kakao.maps.services.Geocoder();
+        geocoder.addressSearch(region, function(result, status) {
+          if (status !== kakao.maps.services.Status.OK) {
+            // 주소 검색 실패 시 키워드 검색 시도
+            var ps = new kakao.maps.services.Places();
+            ps.keywordSearch(region, function(data, st) {
+              if (st !== kakao.maps.services.Status.OK) {
+                wrap.hidden = true;
+                return;
+              }
+              var coords = new kakao.maps.LatLng(
+                data[0].y, data[0].x
+              );
+              drawMap(container, coords, region, addrEl);
+            });
+            return;
+          }
+          var coords = new kakao.maps.LatLng(
+            result[0].y, result[0].x
+          );
+          drawMap(container, coords,
+            result[0].address_name, addrEl);
+        });
+      }
+
+      function drawMap(container, coords, addr, addrEl) {
+        var options = {
+          center: coords,
+          level: 4,
+        };
+        var map = new kakao.maps.Map(container, options);
+
+        // 마커
+        var marker = new kakao.maps.Marker({
+          map: map,
+          position: coords,
+        });
+
+        // 인포윈도우
+        var infowindow = new kakao.maps.InfoWindow({
+          content:
+            '<div style="padding:6px 10px;' +
+            'font-size:0.8rem;font-weight:600;' +
+            'color:var(--navy);">' +
+            escapeHtml(addr) + '</div>',
+        });
+        infowindow.open(map, marker);
+
+        if (addrEl) {
+          addrEl.textContent = "📍 " + addr;
+        }
+      }
+
       async function getOrCreateChatRoom(listingId, sellerId) {
         if (!currentUser) { openAuthModal(); return null; }
         try {
@@ -6206,6 +6297,10 @@
         renderDetailDocs(id).catch(function(e) {
           console.error(e);
         });
+        // 카카오맵 위치 표시
+        setTimeout(function() {
+          renderDetailMap(item.region);
+        }, 300);
         showView("detail");
       }
 
@@ -7383,6 +7478,9 @@
       });
     })();
 
+  </script>
+  <script type="text/javascript"
+    src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=ccf49931f39133162c9362b1a3fdd8c1&libraries=services">
   </script>
   <script>
   if ("serviceWorker" in navigator) {
