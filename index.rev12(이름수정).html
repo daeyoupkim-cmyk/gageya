@@ -3262,6 +3262,126 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     var pendingMonthlyData = [];
+    function syncProfitInputModeUI() {
+      var m =
+        (document.querySelector('input[name="profitInputMode"]:checked') || {}).value || "monthly";
+      if ($("monthlyProfitWrap")) $("monthlyProfitWrap").hidden = m !== "monthly";
+      if ($("sixMonthProfitWrap")) $("sixMonthProfitWrap").hidden = m !== "sixMonth";
+    }
+
+    function syncOwnerWorksUI() {
+      var ow =
+        (document.querySelector('input[name="ownerWorks"]:checked') || {}).value === "yes";
+      if ($("ownerWorkHoursWrap")) $("ownerWorkHoursWrap").hidden = !ow;
+    }
+
+    function updateValuationUI() {
+      syncProfitInputModeUI();
+      syncOwnerWorksUI();
+      var tempItem = buildValuationItemFromForm();
+      var category = tempItem.category;
+      var placeholder = $("valuationPlaceholder");
+      var rangeEl = $("valuationRange");
+      var listEl = $("valuationBreakdown");
+
+      if (!category) {
+        placeholder.hidden = false;
+        rangeEl.hidden = true;
+        listEl.hidden = true;
+        placeholder.textContent = "업종을 선택하고 월별 영업이익을 입력하면 추정 범위가 표시됩니다.";
+        return;
+      }
+
+      var d = computeValuationDetails(tempItem);
+      if (!d) {
+        placeholder.hidden = false;
+        rangeEl.hidden = true;
+        listEl.hidden = true;
+        placeholder.textContent =
+          "이익 금액을 확인해 주세요. (직접 근무 시 인건비 조정 후 영업이익이 0보다 커야 합니다.)";
+        return;
+      }
+
+      var low = Math.min(d.dcfPrice, d.multiplePrice);
+      var high = Math.max(d.dcfPrice, d.multiplePrice);
+
+      placeholder.hidden = true;
+      rangeEl.hidden = false;
+      listEl.hidden = false;
+
+      rangeEl.innerHTML =
+        "보수적 추정: <span class=\"num\">" +
+        formatManWon(low) +
+        "</span>만 원 ~ 적정 추정: <span class=\"num\">" +
+        formatManWon(high) +
+        "</span>만 원";
+
+      var rev = getPendingMonthlyDataDerived().avgRevenue;
+      var keyInc = $("keyMoneyIncluded").checked;
+      var leaseM = parseOptionalInt($("leaseRemainingMonths"));
+
+      var refParts = [];
+      if (rev != null) refParts.push("월 평균 매출 " + formatManWon(rev) + "만 원");
+      refParts.push(keyInc ? "권리금 포함" : "권리금 미포함");
+      if (leaseM != null) refParts.push("임대 잔여 " + formatManWon(leaseM) + "개월");
+
+      var multLine =
+        "조정 월이익 " +
+        formatManWon(d.adjustedMonthlyProfit) +
+        "만 원 ×12 = 연 " +
+        formatManWon(d.annual) +
+        "만 원 × 조정 배수 " +
+        formatManWon(d.mult) +
+        " → Multiple 총액 " +
+        formatManWon(d.multipleGross) +
+        "만 원" +
+        (d.liabilities > 0 ? " − 부채 " + formatManWon(d.liabilities) + "만 원" : "") +
+        " = " +
+        formatManWon(d.multiplePrice) +
+        "만 원";
+
+      var dcfLine =
+        "성장률 " +
+        Math.round(d.growthRate * 1000) / 10 +
+        "%, 할인율 " +
+        Math.round(d.discountRate * 100) +
+        "% · 5년 현금흐름 PV " +
+        formatManWon(d.pvCashFlows) +
+        "만 원 + 잔존가치 PV " +
+        formatManWon(d.pvTerminal) +
+        "만 원" +
+        (d.liabilities > 0 ? " − 부채 " + formatManWon(d.liabilities) + "만 원" : "") +
+        " = " +
+        formatManWon(d.dcfPrice) +
+        "만 원";
+
+      var adjHtml = "";
+      for (var ai = 0; ai < d.adjustmentLines.length; ai++) {
+        adjHtml += "<li>· " + escapeHtml(d.adjustmentLines[ai].text) + "</li>";
+      }
+
+      listEl.innerHTML =
+        "<li><strong>Multiple 방식</strong>" +
+        escapeHtml(multLine) +
+        "</li>" +
+        "<li><strong>DCF 방식</strong>" +
+        escapeHtml(dcfLine) +
+        "</li>" +
+        "<li><strong>조정 요약</strong><ul class=\"valuation-adj-list\">" +
+        adjHtml +
+        "</ul></li>" +
+        "<li><strong>입력 참고</strong>" +
+        escapeHtml(refParts.join(" · ")) +
+        "</li>";
+
+      if (d.liabilities > 0) {
+        listEl.innerHTML +=
+          "<li><strong>부채 반영</strong>승계 부채·보증금 " +
+          formatManWon(d.liabilities) +
+          "만 원을 추정가에서 차감했습니다.</li>";
+      }
+    }
+
     (function () {
       emailjs.init("sMUsFK5iVhGXlT5xO");
       var SUPABASE_URL = "https://dckhkwgxdwlaultcggte.supabase.co";
@@ -3846,19 +3966,6 @@
         };
       }
 
-      function syncProfitInputModeUI() {
-        var m =
-          (document.querySelector('input[name="profitInputMode"]:checked') || {}).value || "monthly";
-        if ($("monthlyProfitWrap")) $("monthlyProfitWrap").hidden = m !== "monthly";
-        if ($("sixMonthProfitWrap")) $("sixMonthProfitWrap").hidden = m !== "sixMonth";
-      }
-
-      function syncOwnerWorksUI() {
-        var ow =
-          (document.querySelector('input[name="ownerWorks"]:checked') || {}).value === "yes";
-        if ($("ownerWorkHoursWrap")) $("ownerWorkHoursWrap").hidden = !ow;
-      }
-
       function buildDetailValuationBadgesHtml(item) {
         var n = normalizeValuationItem(item);
         if (!n) return "";
@@ -4270,113 +4377,6 @@
         if ($("filterHasPhotos")) $("filterHasPhotos").checked = false;
         setLeaseTabActive("");
         if ($("filterSort")) $("filterSort").value = "newest";
-      }
-
-      function updateValuationUI() {
-        syncProfitInputModeUI();
-        syncOwnerWorksUI();
-        var tempItem = buildValuationItemFromForm();
-        var category = tempItem.category;
-        var placeholder = $("valuationPlaceholder");
-        var rangeEl = $("valuationRange");
-        var listEl = $("valuationBreakdown");
-
-        if (!category) {
-          placeholder.hidden = false;
-          rangeEl.hidden = true;
-          listEl.hidden = true;
-          placeholder.textContent = "업종을 선택하고 월별 영업이익을 입력하면 추정 범위가 표시됩니다.";
-          return;
-        }
-
-        var d = computeValuationDetails(tempItem);
-        if (!d) {
-          placeholder.hidden = false;
-          rangeEl.hidden = true;
-          listEl.hidden = true;
-          placeholder.textContent =
-            "이익 금액을 확인해 주세요. (직접 근무 시 인건비 조정 후 영업이익이 0보다 커야 합니다.)";
-          return;
-        }
-
-        var low = Math.min(d.dcfPrice, d.multiplePrice);
-        var high = Math.max(d.dcfPrice, d.multiplePrice);
-
-        placeholder.hidden = true;
-        rangeEl.hidden = false;
-        listEl.hidden = false;
-
-        rangeEl.innerHTML =
-          "보수적 추정: <span class=\"num\">" +
-          formatManWon(low) +
-          "</span>만 원 ~ 적정 추정: <span class=\"num\">" +
-          formatManWon(high) +
-          "</span>만 원";
-
-        var rev = getPendingMonthlyDataDerived().avgRevenue;
-        var keyInc = $("keyMoneyIncluded").checked;
-        var leaseM = parseOptionalInt($("leaseRemainingMonths"));
-
-        var refParts = [];
-        if (rev != null) refParts.push("월 평균 매출 " + formatManWon(rev) + "만 원");
-        refParts.push(keyInc ? "권리금 포함" : "권리금 미포함");
-        if (leaseM != null) refParts.push("임대 잔여 " + formatManWon(leaseM) + "개월");
-
-        var multLine =
-          "조정 월이익 " +
-          formatManWon(d.adjustedMonthlyProfit) +
-          "만 원 ×12 = 연 " +
-          formatManWon(d.annual) +
-          "만 원 × 조정 배수 " +
-          formatManWon(d.mult) +
-          " → Multiple 총액 " +
-          formatManWon(d.multipleGross) +
-          "만 원" +
-          (d.liabilities > 0 ? " − 부채 " + formatManWon(d.liabilities) + "만 원" : "") +
-          " = " +
-          formatManWon(d.multiplePrice) +
-          "만 원";
-
-        var dcfLine =
-          "성장률 " +
-          Math.round(d.growthRate * 1000) / 10 +
-          "%, 할인율 " +
-          Math.round(d.discountRate * 100) +
-          "% · 5년 현금흐름 PV " +
-          formatManWon(d.pvCashFlows) +
-          "만 원 + 잔존가치 PV " +
-          formatManWon(d.pvTerminal) +
-          "만 원" +
-          (d.liabilities > 0 ? " − 부채 " + formatManWon(d.liabilities) + "만 원" : "") +
-          " = " +
-          formatManWon(d.dcfPrice) +
-          "만 원";
-
-        var adjHtml = "";
-        for (var ai = 0; ai < d.adjustmentLines.length; ai++) {
-          adjHtml += "<li>· " + escapeHtml(d.adjustmentLines[ai].text) + "</li>";
-        }
-
-        listEl.innerHTML =
-          "<li><strong>Multiple 방식</strong>" +
-          escapeHtml(multLine) +
-          "</li>" +
-          "<li><strong>DCF 방식</strong>" +
-          escapeHtml(dcfLine) +
-          "</li>" +
-          "<li><strong>조정 요약</strong><ul class=\"valuation-adj-list\">" +
-          adjHtml +
-          "</ul></li>" +
-          "<li><strong>입력 참고</strong>" +
-          escapeHtml(refParts.join(" · ")) +
-          "</li>";
-
-        if (d.liabilities > 0) {
-          listEl.innerHTML +=
-            "<li><strong>부채 반영</strong>승계 부채·보증금 " +
-            formatManWon(d.liabilities) +
-            "만 원을 추정가에서 차감했습니다.</li>";
-        }
       }
 
       async function refreshInterestCountsCache() {
@@ -7914,6 +7914,14 @@
         await renderList();
         syncHomeHeaderFromScroll();
       }
+
+      window.$ = $;
+      window.formatManWon = formatManWon;
+      window.computeValuationDetails = computeValuationDetails;
+      window.buildValuationItemFromForm = buildValuationItemFromForm;
+      window.parseOptionalInt = parseOptionalInt;
+      window.escapeHtml = escapeHtml;
+      window.getPendingMonthlyDataDerived = getPendingMonthlyDataDerived;
 
       initApp().catch(function (err) {
         console.error(err);
