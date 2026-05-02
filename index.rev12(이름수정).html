@@ -1798,6 +1798,95 @@
 
     .nav-auth-hidden { display: none; }
 
+    .calc-accordion {
+      margin-top: 0.75rem;
+      border-top: 1px solid rgba(26, 58, 143, 0.15);
+      padding-top: 0.65rem;
+    }
+
+    .calc-accordion-btn {
+      background: none;
+      border: none;
+      padding: 0;
+      font-family: inherit;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--navy);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .calc-accordion-btn:hover {
+      color: var(--orange);
+    }
+
+    .calc-accordion-body {
+      margin-top: 0.75rem;
+      display: none;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .calc-accordion-body.is-open {
+      display: flex;
+    }
+
+    .calc-step {
+      padding: 0.75rem;
+      background: rgba(255, 255, 255, 0.7);
+      border-radius: var(--radius);
+      border-left: 3px solid var(--navy);
+    }
+
+    .calc-step-title {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--navy);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin: 0 0 0.45rem;
+    }
+
+    .calc-step-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-bottom: 0.2rem;
+      gap: 0.5rem;
+    }
+
+    .calc-step-row .calc-val {
+      font-weight: 700;
+      color: var(--text);
+      white-space: nowrap;
+    }
+
+    .calc-step-row.calc-result {
+      margin-top: 0.4rem;
+      padding-top: 0.4rem;
+      border-top: 1px solid var(--border);
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .calc-step-row.calc-result .calc-val {
+      color: var(--orange);
+    }
+
+    .calc-disclaimer {
+      font-size: 0.72rem;
+      color: var(--muted);
+      line-height: 1.5;
+      padding: 0.65rem 0.75rem;
+      background: rgba(26, 58, 143, 0.06);
+      border-radius: var(--radius);
+      margin-top: 0.25rem;
+    }
+
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 </head>
@@ -3172,6 +3261,183 @@
           ownerLaborDeduction: ownerLabor,
           adjustmentLines: lines,
         };
+      }
+
+      function buildCalcAccordionHtml(item, vd) {
+        if (!vd) return "";
+
+        // 1단계: 월 영업이익 조정
+        var step1 = "";
+        var baseP = Math.round(vd.baseMonthlyProfit);
+        var laborD = Math.round(vd.ownerLaborDeduction);
+        var adjP = Math.round(vd.adjustedMonthlyProfit);
+
+        if (item.profitInputMode === "sixMonth" && item.sixMonthProfit) {
+          step1 +=
+            '<div class="calc-step-row">' +
+            '<span>6개월 합계 영업이익</span>' +
+            '<span class="calc-val">' + formatManWon(item.sixMonthProfit) + '만 원</span>' +
+            '</div>' +
+            '<div class="calc-step-row">' +
+            '<span>월평균 환산 (÷6)</span>' +
+            '<span class="calc-val">' + formatManWon(baseP) + '만 원</span>' +
+            '</div>';
+        } else {
+          step1 +=
+            '<div class="calc-step-row">' +
+            '<span>월 평균 영업이익 (입력값)</span>' +
+            '<span class="calc-val">' + formatManWon(baseP) + '만 원</span>' +
+            '</div>';
+        }
+
+        if (laborD > 0) {
+          var h = item.ownerWorkHours || 0;
+          step1 +=
+            '<div class="calc-step-row">' +
+            '<span>사장님 인건비 차감 (하루 ' + h + '시간 × 1.5만 × 22일)</span>' +
+            '<span class="calc-val">−' + formatManWon(laborD) + '만 원</span>' +
+            '</div>';
+        } else {
+          step1 +=
+            '<div class="calc-step-row">' +
+            '<span>인건비 차감 (사장님 미근무)</span>' +
+            '<span class="calc-val">0만 원</span>' +
+            '</div>';
+        }
+        step1 +=
+          '<div class="calc-step-row calc-result">' +
+          '<span>조정 후 월 영업이익</span>' +
+          '<span class="calc-val">' + formatManWon(adjP) + '만 원</span>' +
+          '</div>';
+
+        // 2단계: 연간 이익
+        var annual = Math.round(vd.annual);
+        var step2 =
+          '<div class="calc-step-row">' +
+          '<span>조정 월이익 × 12개월</span>' +
+          '<span class="calc-val">' + formatManWon(adjP) + ' × 12</span>' +
+          '</div>' +
+          '<div class="calc-step-row calc-result">' +
+          '<span>연간 영업이익</span>' +
+          '<span class="calc-val">' + formatManWon(annual) + '만 원</span>' +
+          '</div>';
+
+        // 3단계: Multiple
+        var adjLines = vd.adjustmentLines;
+        var step3 = "";
+        for (var i = 0; i < adjLines.length; i++) {
+          step3 +=
+            '<div class="calc-step-row">' +
+            '<span>' + escapeHtml(adjLines[i].text) + '</span>' +
+            '</div>';
+        }
+        step3 +=
+          '<div class="calc-step-row">' +
+          '<span>최종 적용 배수</span>' +
+          '<span class="calc-val">' +
+          (Math.round(vd.mult * 100) / 100).toFixed(2) + '</span>' +
+          '</div>' +
+          '<div class="calc-step-row">' +
+          '<span>연이익 × 배수</span>' +
+          '<span class="calc-val">' +
+          formatManWon(annual) + ' × ' +
+          (Math.round(vd.mult * 100) / 100).toFixed(2) + ' = ' +
+          formatManWon(Math.round(vd.multipleGross)) + '만 원</span>' +
+          '</div>';
+        if (vd.liabilities > 0) {
+          step3 +=
+            '<div class="calc-step-row">' +
+            '<span>승계 부채 차감</span>' +
+            '<span class="calc-val">−' + formatManWon(vd.liabilities) + '만 원</span>' +
+            '</div>';
+        }
+        step3 +=
+          '<div class="calc-step-row calc-result">' +
+          '<span>Multiple 추정가</span>' +
+          '<span class="calc-val">' + formatManWon(Math.round(vd.multiplePrice)) + '만 원</span>' +
+          '</div>';
+
+        // 4단계: DCF
+        var gPct = Math.round(vd.growthRate * 1000) / 10;
+        var rPct = Math.round(vd.discountRate * 100);
+        var step4 =
+          '<div class="calc-step-row">' +
+          '<span>매출 성장률</span>' +
+          '<span class="calc-val">' + gPct + '%</span>' +
+          '</div>' +
+          '<div class="calc-step-row">' +
+          '<span>할인율 (기본 15% + 리스크 가산)</span>' +
+          '<span class="calc-val">' + rPct + '%</span>' +
+          '</div>' +
+          '<div class="calc-step-row">' +
+          '<span>5년 현금흐름 현재가치 (PV)</span>' +
+          '<span class="calc-val">' + formatManWon(Math.round(vd.pvCashFlows)) + '만 원</span>' +
+          '</div>' +
+          '<div class="calc-step-row">' +
+          '<span>잔존가치 현재가치 (Terminal PV)</span>' +
+          '<span class="calc-val">' + formatManWon(Math.round(vd.pvTerminal)) + '만 원</span>' +
+          '</div>';
+        if (vd.liabilities > 0) {
+          step4 +=
+            '<div class="calc-step-row">' +
+            '<span>승계 부채 차감</span>' +
+            '<span class="calc-val">−' + formatManWon(vd.liabilities) + '만 원</span>' +
+            '</div>';
+        }
+        step4 +=
+          '<div class="calc-step-row calc-result">' +
+          '<span>DCF 추정가</span>' +
+          '<span class="calc-val">' + formatManWon(Math.round(vd.dcfPrice)) + '만 원</span>' +
+          '</div>';
+
+        // 최종
+        var low = Math.min(vd.multiplePrice, vd.dcfPrice);
+        var high = Math.max(vd.multiplePrice, vd.dcfPrice);
+        var stepFinal =
+          '<div class="calc-step-row">' +
+          '<span>보수적 추정 (낮은 값)</span>' +
+          '<span class="calc-val">' + formatManWon(Math.round(low)) + '만 원</span>' +
+          '</div>' +
+          '<div class="calc-step-row calc-result">' +
+          '<span>적정 추정 (높은 값)</span>' +
+          '<span class="calc-val">' + formatManWon(Math.round(high)) + '만 원</span>' +
+          '</div>';
+
+        return (
+          '<div class="calc-accordion">' +
+          '<button type="button" class="calc-accordion-btn" ' +
+          'id="calcAccordionToggle">' +
+          '<span id="calcAccordionArrow">▶</span> 계산 과정 자세히 보기' +
+          '</button>' +
+          '<div class="calc-accordion-body" id="calcAccordionBody">' +
+
+          '<div class="calc-step">' +
+          '<p class="calc-step-title">1단계 — 월 영업이익 조정</p>' +
+          step1 + '</div>' +
+
+          '<div class="calc-step">' +
+          '<p class="calc-step-title">2단계 — 연간 이익 환산</p>' +
+          step2 + '</div>' +
+
+          '<div class="calc-step">' +
+          '<p class="calc-step-title">3단계 — Multiple 방식 (업종 배수)</p>' +
+          step3 + '</div>' +
+
+          '<div class="calc-step">' +
+          '<p class="calc-step-title">4단계 — DCF 방식 (현금흐름할인)</p>' +
+          step4 + '</div>' +
+
+          '<div class="calc-step">' +
+          '<p class="calc-step-title">최종 추정 범위</p>' +
+          stepFinal + '</div>' +
+
+          '<p class="calc-disclaimer">' +
+          '이 계산법은 PE·VC 업계 표준 방식(DCF + Multiple)을 ' +
+          '자영업 거래에 맞게 가게야가 재설계한 것입니다. ' +
+          '실제 거래 가격과 다를 수 있으며 참고용으로만 활용하세요.' +
+          '</p>' +
+          '</div></div>'
+        );
       }
 
       function getConservativeValuation(item) {
@@ -5418,7 +5684,8 @@
             "<li><strong>조정 요약</strong><ul class=\"valuation-adj-list\">" +
             adjHtmlD +
             "</ul></li></ul>" +
-            '<p style="font-size:0.72rem;color:var(--muted);margin-top:0.65rem;line-height:1.5;">※ 자동 추정가는 입력 정보 기반의 참고용 수치이며,<br/>실제 거래 가격과 다를 수 있습니다.<br/>가게야는 해당 수치에 대한 법적 책임을 지지 않습니다.</p>';
+            '<p style="font-size:0.72rem;color:var(--muted);margin-top:0.65rem;line-height:1.5;">※ 자동 추정가는 입력 정보 기반의 참고용 수치이며,<br/>실제 거래 가격과 다를 수 있습니다.<br/>가게야는 해당 수치에 대한 법적 책임을 지지 않습니다.</p>' +
+            buildCalcAccordionHtml(item, vdDetail);
           valWrap.hidden = false;
         } else {
           valWrap.innerHTML = "";
@@ -5467,6 +5734,18 @@
         var vc = $("detailViewCount");
         if (vc) vc.textContent = "조회 " + getViewCount(id) + "회";
         applyDetailStatusUI(item);
+        // 아코디언 토글
+        setTimeout(function() {
+          var toggleBtn = $("calcAccordionToggle");
+          var body = $("calcAccordionBody");
+          var arrow = $("calcAccordionArrow");
+          if (toggleBtn && body) {
+            toggleBtn.addEventListener("click", function() {
+              var isOpen = body.classList.toggle("is-open");
+              if (arrow) arrow.textContent = isOpen ? "▼" : "▶";
+            });
+          }
+        }, 0);
         showView("detail");
       }
 
