@@ -1903,6 +1903,77 @@
       }
     }
 
+    .monthly-data-row {
+      display: flex;
+      gap: 0.4rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .monthly-data-row input {
+      flex: 1;
+      min-width: 80px;
+      padding: 0.55rem 0.65rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.85rem;
+      font-family: inherit;
+      background: var(--surface);
+    }
+
+    .monthly-data-row input:focus {
+      outline: none;
+      border-color: var(--navy);
+      box-shadow: var(--focus-ring);
+    }
+
+    .monthly-data-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--muted);
+      white-space: nowrap;
+      min-width: 3rem;
+    }
+
+    .monthly-data-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 0.2rem 0.5rem;
+      border-radius: var(--radius);
+      background: rgba(22, 101, 52, 0.12);
+      color: #166534;
+      border: 1px solid rgba(22, 101, 52, 0.35);
+    }
+
+    .monthly-data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+      margin-top: 0.5rem;
+    }
+
+    .monthly-data-table th {
+      background: var(--navy-tint);
+      color: var(--navy);
+      font-weight: 700;
+      padding: 0.45rem 0.65rem;
+      text-align: left;
+      font-size: 0.75rem;
+    }
+
+    .monthly-data-table td {
+      padding: 0.45rem 0.65rem;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    .monthly-data-table tr:last-child td {
+      border-bottom: none;
+    }
+
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 </head>
@@ -2276,6 +2347,23 @@
           <label for="monthlyRevenue">월 평균 매출 (만 원)</label>
           <input type="number" id="monthlyRevenue" name="monthlyRevenue" min="0" step="1" inputmode="numeric" placeholder="예: 3000" />
           <p class="field-hint">숫자만 입력합니다. 추정 계산에는 직접 쓰이지 않고 참고용으로 표시됩니다.</p>
+        </div>
+
+        <div class="field">
+          <label>월별 매출·영업이익 (선택)</label>
+          <p class="field-hint" style="margin-bottom:0.65rem;">
+            입력하면 매물에 📊 배지가 표시되어 신뢰도가 높아집니다.
+            최근 월부터 순서대로 입력해 주세요.
+          </p>
+          <div id="monthlyDataRows"
+            style="display:flex;flex-direction:column;gap:0.5rem;">
+          </div>
+          <button type="button" class="btn btn-ghost"
+            id="addMonthlyDataBtn"
+            style="margin-top:0.5rem;font-size:0.82rem;">
+            + 월 추가
+          </button>
+          <p class="field-hint">최대 6개월까지 입력 가능합니다.</p>
         </div>
 
         <div class="val-field-block">
@@ -3166,6 +3254,7 @@
           revenueVerifiable: row.revenue_verifiable,
           keyMoneyIncluded: row.key_money_included,
           leaseRemainingMonths: row.lease_remaining_months,
+          monthlyData: row.monthly_data || null,
           photos: row.photos == null ? [] : row.photos,
           isSample: !!row.is_sample,
           createdAt: row.created_at,
@@ -3202,6 +3291,8 @@
           revenue_verifiable: item.revenueVerifiable,
           key_money_included: item.keyMoneyIncluded,
           lease_remaining_months: item.leaseRemainingMonths,
+          monthly_data: item.monthlyData &&
+            item.monthlyData.length ? item.monthlyData : null,
           photos: item.photos && item.photos.length ? item.photos : [],
           status: item.status != null && item.status !== "" ? item.status : null,
           is_sample: !!item.isSample,
@@ -3238,6 +3329,8 @@
       };
 
       var pendingRegisterPhotos = [];
+      var MAX_MONTHLY_DATA = 6;
+      var pendingMonthlyData = [];
       var photoEditDraftPhotos = [];
       var detailPhotoSliderState = { urls: [], index: 0 };
 
@@ -5457,6 +5550,103 @@
         resetPhotoEditModalStep2();
       }
 
+      function getMonthLabel(offsetFromNow) {
+        var d = new Date();
+        d.setMonth(d.getMonth() - offsetFromNow);
+        return d.getFullYear() + "년 " + (d.getMonth() + 1) + "월";
+      }
+
+      function renderMonthlyDataRows() {
+        var container = $("monthlyDataRows");
+        if (!container) return;
+        container.innerHTML = "";
+        for (var i = 0; i < pendingMonthlyData.length; i++) {
+          (function(idx) {
+            var row = document.createElement("div");
+            row.className = "monthly-data-row";
+
+            var label = document.createElement("span");
+            label.className = "monthly-data-label";
+            label.textContent = pendingMonthlyData[idx].month;
+
+            var revenueInput = document.createElement("input");
+            revenueInput.type = "number";
+            revenueInput.placeholder = "매출 (만원)";
+            revenueInput.min = "0";
+            revenueInput.inputMode = "numeric";
+            revenueInput.value =
+              pendingMonthlyData[idx].revenue != null
+              ? pendingMonthlyData[idx].revenue : "";
+
+            var profitInput = document.createElement("input");
+            profitInput.type = "number";
+            profitInput.placeholder = "영업이익 (만원)";
+            profitInput.min = "0";
+            profitInput.inputMode = "numeric";
+            profitInput.value =
+              pendingMonthlyData[idx].profit != null
+              ? pendingMonthlyData[idx].profit : "";
+
+            revenueInput.addEventListener("input", function() {
+              var v = revenueInput.value.trim();
+              pendingMonthlyData[idx].revenue =
+                v === "" ? null : parseFloat(v);
+            });
+            profitInput.addEventListener("input", function() {
+              var v = profitInput.value.trim();
+              pendingMonthlyData[idx].profit =
+                v === "" ? null : parseFloat(v);
+            });
+
+            var rmBtn = document.createElement("button");
+            rmBtn.type = "button";
+            rmBtn.textContent = "×";
+            rmBtn.style.cssText =
+              "background:none;border:none;color:var(--muted);" +
+              "font-size:1.1rem;cursor:pointer;padding:0 0.25rem;" +
+              "font-family:inherit;flex-shrink:0;";
+            rmBtn.addEventListener("click", function() {
+              pendingMonthlyData.splice(idx, 1);
+              renderMonthlyDataRows();
+              updateAddMonthlyBtn();
+            });
+
+            row.appendChild(label);
+            row.appendChild(revenueInput);
+            row.appendChild(profitInput);
+            row.appendChild(rmBtn);
+            container.appendChild(row);
+          })(i);
+        }
+      }
+
+      function updateAddMonthlyBtn() {
+        var btn = $("addMonthlyDataBtn");
+        if (!btn) return;
+        btn.hidden = pendingMonthlyData.length >= MAX_MONTHLY_DATA;
+      }
+
+      function clearMonthlyData() {
+        pendingMonthlyData = [];
+        renderMonthlyDataRows();
+        updateAddMonthlyBtn();
+      }
+
+      var addMonthlyDataBtnEl = $("addMonthlyDataBtn");
+      if (addMonthlyDataBtnEl) {
+        addMonthlyDataBtnEl.addEventListener("click", function() {
+          if (pendingMonthlyData.length >= MAX_MONTHLY_DATA) return;
+          var offset = pendingMonthlyData.length;
+          pendingMonthlyData.push({
+            month: getMonthLabel(offset),
+            revenue: null,
+            profit: null,
+          });
+          renderMonthlyDataRows();
+          updateAddMonthlyBtn();
+        });
+      }
+
       async function renderList() {
         try {
         var container = $("cardContainer");
@@ -5615,6 +5805,15 @@
               interestLine1.hidden = false;
               interestLine1.textContent = "관심 " + ic1 + "명";
             }
+            var hasMonthlyData = item.monthlyData &&
+              item.monthlyData.length > 0;
+            if (hasMonthlyData) {
+              var badge = document.createElement("p");
+              badge.className = "monthly-data-badge";
+              badge.style.marginTop = "0.35rem";
+              badge.innerHTML = "📊 월별 매출·영업이익 공개";
+              body.appendChild(badge);
+            }
           } else {
             btn.innerHTML =
               corner +
@@ -5635,6 +5834,15 @@
             if (ic2 >= 1) {
               interestLine2.hidden = false;
               interestLine2.textContent = "관심 " + ic2 + "명";
+            }
+            var hasMonthlyData = item.monthlyData &&
+              item.monthlyData.length > 0;
+            if (hasMonthlyData) {
+              var badge = document.createElement("p");
+              badge.className = "monthly-data-badge";
+              badge.style.marginTop = "0.35rem";
+              badge.innerHTML = "📊 월별 매출·영업이익 공개";
+              btn.appendChild(badge);
             }
           }
           btn.addEventListener("click", function () {
@@ -6203,6 +6411,58 @@
           valWrap.hidden = true;
         }
 
+        var monthlyDataWrap = document.getElementById(
+          "detailMonthlyDataWrap");
+        if (!monthlyDataWrap) {
+          monthlyDataWrap = document.createElement("div");
+          monthlyDataWrap.id = "detailMonthlyDataWrap";
+          monthlyDataWrap.style.cssText =
+            "margin-bottom:1.25rem;padding:1rem;" +
+            "background:var(--surface);" +
+            "border-radius:var(--radius);" +
+            "border:1px solid var(--border);";
+          var valWrapEl = $("detailValuationWrap");
+          if (valWrapEl && valWrapEl.parentNode) {
+            valWrapEl.parentNode.insertBefore(
+              monthlyDataWrap, valWrapEl);
+          }
+        }
+
+        if (item.monthlyData && item.monthlyData.length > 0) {
+          var tableHtml =
+            '<div style="display:flex;align-items:center;' +
+            'gap:0.5rem;margin-bottom:0.65rem;">' +
+            '<h2 style="margin:0;font-size:0.8rem;font-weight:700;' +
+            'color:var(--navy);text-transform:uppercase;' +
+            'letter-spacing:0.06em;">월별 매출·영업이익</h2>' +
+            '<span class="monthly-data-badge">📊 공개</span>' +
+            '</div>' +
+            '<table class="monthly-data-table">' +
+            '<thead><tr>' +
+            '<th>월</th><th>매출 (만원)</th><th>영업이익 (만원)</th>' +
+            '</tr></thead><tbody>';
+
+          item.monthlyData.forEach(function(d) {
+            tableHtml +=
+              '<tr><td>' + escapeHtml(d.month) + '</td>' +
+              '<td>' + (d.revenue != null
+                ? formatManWon(d.revenue) : '—') + '</td>' +
+              '<td>' + (d.profit != null
+                ? formatManWon(d.profit) : '—') + '</td>' +
+              '</tr>';
+          });
+
+          tableHtml += '</tbody></table>' +
+            '<p style="font-size:0.72rem;color:var(--muted);' +
+            'margin:0.5rem 0 0;">판매자가 직접 입력한 수치입니다.' +
+            ' 홈택스 증빙 서류와 함께 확인하세요.</p>';
+
+          monthlyDataWrap.innerHTML = tableHtml;
+          monthlyDataWrap.hidden = false;
+        } else {
+          monthlyDataWrap.hidden = true;
+        }
+
         var negWrap = $("detailNegotiationWrap");
         var negContent = $("detailNegotiationContent");
         if (negWrap && negContent && vdDetail) {
@@ -6387,6 +6647,9 @@
           leaseRemainingMonths: leaseRemainingMonths,
           createdAt: Date.now(),
           userId: currentUser ? currentUser.id : null,
+          monthlyData: pendingMonthlyData.filter(function(d) {
+            return d.revenue != null || d.profit != null;
+          }),
         };
         if (pendingRegisterPhotos.length > 0) {
           newItem.photos = pendingRegisterPhotos.slice();
@@ -6410,6 +6673,7 @@
         if ($("regionSi")) $("regionSi").value = "";
         if ($("regionGu")) $("regionGu").value = "";
         if ($("regionDong")) $("regionDong").value = "";
+        clearMonthlyData();
         clearRegisterPhotoPreview();
         updateValuationUI();
         await loadListings();
@@ -6428,6 +6692,7 @@
         if ($("regionSi")) $("regionSi").value = "";
         if ($("regionGu")) $("regionGu").value = "";
         if ($("regionDong")) $("regionDong").value = "";
+        clearMonthlyData();
         clearRegisterPhotoPreview();
         updateValuationUI();
         showView("list");
@@ -6716,6 +6981,7 @@
           if ($("regionSi")) $("regionSi").value = "";
           if ($("regionGu")) $("regionGu").value = "";
           if ($("regionDong")) $("regionDong").value = "";
+          clearMonthlyData();
           var dn = $("draftNotice");
           if (dn) dn.style.display = "none";
           updateValuationUI();
