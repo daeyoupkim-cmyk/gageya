@@ -3207,6 +3207,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
+    var pendingMonthlyData = [];
     (function () {
       emailjs.init("sMUsFK5iVhGXlT5xO");
       var SUPABASE_URL = "https://dckhkwgxdwlaultcggte.supabase.co";
@@ -3329,7 +3330,6 @@
 
       var pendingRegisterPhotos = [];
       var MAX_MONTHLY_DATA = 6;
-      var pendingMonthlyData = [];
       var photoEditDraftPhotos = [];
       var detailPhotoSliderState = { urls: [], index: 0 };
 
