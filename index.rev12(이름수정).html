@@ -5802,6 +5802,47 @@
               escapeHtml(item.region) +
               "</span>";
             body.querySelector(".card-price").textContent = formatPriceDisplay(item.price);
+            var infoHtml = "";
+
+            // 평균 매출
+            if (item.monthlyRevenue != null && item.monthlyRevenue > 0) {
+              infoHtml +=
+                '<span>매출 ' + formatManWon(item.monthlyRevenue) + '만</span>';
+            }
+
+            // 평균 영업이익
+            var adjP = getAdjustedMonthlyProfitFromItem(item);
+            if (adjP != null && adjP > 0) {
+              infoHtml +=
+                '<span>영업이익 ' + formatManWon(Math.round(adjP)) + '만</span>';
+            }
+
+            if (infoHtml) {
+              var infoRow = document.createElement("div");
+              infoRow.style.cssText =
+                "display:flex;flex-wrap:wrap;gap:0.3rem;margin-top:0.3rem;";
+              infoRow.innerHTML = infoHtml.replace(/<span>/g,
+                '<span style="font-size:0.7rem;font-weight:600;' +
+                'color:var(--muted);background:var(--bg);' +
+                'padding:0.15rem 0.4rem;border-radius:var(--radius);' +
+                'border:1px solid var(--border);">');
+              body.appendChild(infoRow);
+            }
+
+            // 추정가 범위
+            var vdCard = computeValuationDetails(item);
+            if (vdCard) {
+              var vLowCard = Math.min(vdCard.dcfPrice, vdCard.multiplePrice);
+              var vHighCard = Math.max(vdCard.dcfPrice, vdCard.multiplePrice);
+              var valRow = document.createElement("div");
+              valRow.style.cssText =
+                "font-size:0.7rem;font-weight:600;" +
+                "color:var(--navy);margin-top:0.25rem;";
+              valRow.textContent =
+                "추정 " + formatManWon(Math.round(vLowCard)) +
+                " ~ " + formatManWon(Math.round(vHighCard)) + "만원";
+              body.appendChild(valRow);
+            }
             var ic1 = getInterestCount(item.id);
             var interestLine1 = body.querySelector(".card-interest-count");
             if (ic1 >= 1) {
@@ -5832,6 +5873,47 @@
               escapeHtml(item.region) +
               "</span>";
             btn.querySelector(".card-price").textContent = formatPriceDisplay(item.price);
+            var infoHtml = "";
+
+            // 평균 매출
+            if (item.monthlyRevenue != null && item.monthlyRevenue > 0) {
+              infoHtml +=
+                '<span>매출 ' + formatManWon(item.monthlyRevenue) + '만</span>';
+            }
+
+            // 평균 영업이익
+            var adjP = getAdjustedMonthlyProfitFromItem(item);
+            if (adjP != null && adjP > 0) {
+              infoHtml +=
+                '<span>영업이익 ' + formatManWon(Math.round(adjP)) + '만</span>';
+            }
+
+            if (infoHtml) {
+              var infoRow = document.createElement("div");
+              infoRow.style.cssText =
+                "display:flex;flex-wrap:wrap;gap:0.3rem;margin-top:0.3rem;";
+              infoRow.innerHTML = infoHtml.replace(/<span>/g,
+                '<span style="font-size:0.7rem;font-weight:600;' +
+                'color:var(--muted);background:var(--bg);' +
+                'padding:0.15rem 0.4rem;border-radius:var(--radius);' +
+                'border:1px solid var(--border);">');
+              btn.appendChild(infoRow);
+            }
+
+            // 추정가 범위
+            var vdCard = computeValuationDetails(item);
+            if (vdCard) {
+              var vLowCard = Math.min(vdCard.dcfPrice, vdCard.multiplePrice);
+              var vHighCard = Math.max(vdCard.dcfPrice, vdCard.multiplePrice);
+              var valRow = document.createElement("div");
+              valRow.style.cssText =
+                "font-size:0.7rem;font-weight:600;" +
+                "color:var(--navy);margin-top:0.25rem;";
+              valRow.textContent =
+                "추정 " + formatManWon(Math.round(vLowCard)) +
+                " ~ " + formatManWon(Math.round(vHighCard)) + "만원";
+              btn.appendChild(valRow);
+            }
             var ic2 = getInterestCount(item.id);
             var interestLine2 = btn.querySelector(".card-interest-count");
             if (ic2 >= 1) {
