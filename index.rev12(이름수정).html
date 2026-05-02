@@ -2288,12 +2288,21 @@
           </div>
           <div id="monthlyProfitWrap" class="val-subfield field">
             <label for="monthlyProfit">월 평균 영업이익 (만 원)</label>
+            <p class="field-hint">
+              매출에서 임대료·재료비·인건비를 뺀 후
+              내 손에 남는 금액입니다. (세금 납부 전 기준)
+            </p>
             <input type="number" id="monthlyProfit" name="monthlyProfit" min="0" step="1" inputmode="numeric" placeholder="예: 200" />
           </div>
           <div id="sixMonthProfitWrap" class="val-subfield field" hidden>
             <label for="sixMonthProfit">최근 6개월 영업이익 합계 (만 원)</label>
+            <p class="field-hint">
+              매출에서 임대료·재료비·인건비를 뺀 후
+              내 손에 남는 금액의 6개월 합계입니다.
+              (세금 납부 전 기준) 월평균 = 합계 ÷ 6으로
+              자동 반영됩니다.
+            </p>
             <input type="number" id="sixMonthProfit" name="sixMonthProfit" min="0" step="1" inputmode="numeric" placeholder="예: 1200" />
-            <p class="field-hint">월평균 = 합계 ÷ 6으로 자동 반영됩니다.</p>
           </div>
         </div>
 
