@@ -4336,21 +4336,29 @@
               !("PushManager" in window)) return;
           if (!currentUser) return;
 
-          var reg = await navigator.serviceWorker.ready;
           var permission = await Notification.requestPermission();
           if (permission !== "granted") return;
 
-          var convertedKey = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
+          var reg = await navigator.serviceWorker.ready;
+
+          // 기존 구독 먼저 해제
+          var existingSub = await reg.pushManager.getSubscription();
+          if (existingSub) await existingSub.unsubscribe();
+
+          // 새로 구독
           var subscription = await reg.pushManager.subscribe({
             userVisibleOnly: true,
-            applicationServerKey: convertedKey,
+            applicationServerKey: VAPID_PUBLIC_KEY,
           });
 
-          await sb.from("push_subscriptions").upsert({
-            user_id: currentUser.id,
-            subscription: subscription.toJSON(),
-            created_at: Date.now(),
-          });
+          var res = await sb.from("push_subscriptions")
+            .upsert({
+              user_id: currentUser.id,
+              subscription: subscription.toJSON(),
+              created_at: Date.now(),
+            }, { onConflict: "user_id" });
+
+          if (res.error) throw res.error;
           console.log("Push 구독 완료");
         } catch(e) {
           console.error("Push 구독 실패:", e);
