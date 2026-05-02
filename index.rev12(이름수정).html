@@ -2254,6 +2254,70 @@
             <label for="filterHasPhotos">사진 있는 매물만</label>
           </div>
           <div class="filter-tabs-wrap">
+            <span class="filter-label">월 평균 매출 (만원)</span>
+            <div class="filter-tabs" id="filterRevenueTabs"
+              role="tablist" aria-label="월 평균 매출 필터">
+              <button type="button" class="filter-tab is-active"
+                data-rev-min="" data-rev-max=""
+                role="tab" aria-selected="true">전체</button>
+              <button type="button" class="filter-tab"
+                data-rev-min="" data-rev-max="1000"
+                role="tab">~1천만</button>
+              <button type="button" class="filter-tab"
+                data-rev-min="1001" data-rev-max="3000"
+                role="tab">1천~3천만</button>
+              <button type="button" class="filter-tab"
+                data-rev-min="3001" data-rev-max="5000"
+                role="tab">3천~5천만</button>
+              <button type="button" class="filter-tab"
+                data-rev-min="5001" data-rev-max=""
+                role="tab">5천만+</button>
+            </div>
+          </div>
+
+          <div class="filter-tabs-wrap">
+            <span class="filter-label">월 평균 영업이익 (만원)</span>
+            <div class="filter-tabs" id="filterProfitTabs"
+              role="tablist" aria-label="월 평균 영업이익 필터">
+              <button type="button" class="filter-tab is-active"
+                data-profit-min="" data-profit-max=""
+                role="tab" aria-selected="true">전체</button>
+              <button type="button" class="filter-tab"
+                data-profit-min="" data-profit-max="100"
+                role="tab">~100만</button>
+              <button type="button" class="filter-tab"
+                data-profit-min="101" data-profit-max="300"
+                role="tab">100~300만</button>
+              <button type="button" class="filter-tab"
+                data-profit-min="301" data-profit-max="500"
+                role="tab">300~500만</button>
+              <button type="button" class="filter-tab"
+                data-profit-min="501" data-profit-max=""
+                role="tab">500만+</button>
+            </div>
+          </div>
+
+          <div class="filter-tabs-wrap">
+            <span class="filter-label">월 영업이익률</span>
+            <p class="filter-toggle-hint"
+              style="margin:-0.25rem 0 0.45rem 0;">
+              매출 대비 영업이익 비율입니다.
+            </p>
+            <div class="filter-tabs" id="filterMarginTabs"
+              role="tablist" aria-label="영업이익률 필터">
+              <button type="button" class="filter-tab is-active"
+                data-margin="" role="tab"
+                aria-selected="true">전체</button>
+              <button type="button" class="filter-tab"
+                data-margin="under10" role="tab">10% 미만</button>
+              <button type="button" class="filter-tab"
+                data-margin="10to20" role="tab">10~20%</button>
+              <button type="button" class="filter-tab"
+                data-margin="over20" role="tab">20% 이상</button>
+            </div>
+          </div>
+
+          <div class="filter-tabs-wrap">
             <span class="filter-label">임대 잔여기간</span>
             <div class="filter-tabs" id="filterLeaseTabs" role="tablist" aria-label="임대 잔여기간">
               <button type="button" class="filter-tab is-active" data-lease="" role="tab" aria-selected="true">전체</button>
@@ -4035,6 +4099,81 @@
         return null;
       }
 
+      function setRevenueTabActive(minVal, maxVal) {
+        var tabs = document.querySelectorAll(
+          "#filterRevenueTabs .filter-tab");
+        for (var i = 0; i < tabs.length; i++) {
+          var mn = tabs[i].getAttribute("data-rev-min") || "";
+          var mx = tabs[i].getAttribute("data-rev-max") || "";
+          var on = mn === (minVal || "") && mx === (maxVal || "");
+          tabs[i].classList.toggle("is-active", on);
+          tabs[i].setAttribute("aria-selected", on ? "true" : "false");
+        }
+      }
+
+      function getSelectedRevenueRange() {
+        var tabs = document.querySelectorAll(
+          "#filterRevenueTabs .filter-tab");
+        for (var i = 0; i < tabs.length; i++) {
+          if (!tabs[i].classList.contains("is-active")) continue;
+          var mn = tabs[i].getAttribute("data-rev-min");
+          var mx = tabs[i].getAttribute("data-rev-max");
+          return {
+            minR: mn === "" || mn == null ? null : parseInt(mn, 10),
+            maxR: mx === "" || mx == null ? null : parseInt(mx, 10),
+          };
+        }
+        return { minR: null, maxR: null };
+      }
+
+      function setProfitTabActive(minVal, maxVal) {
+        var tabs = document.querySelectorAll(
+          "#filterProfitTabs .filter-tab");
+        for (var i = 0; i < tabs.length; i++) {
+          var mn = tabs[i].getAttribute("data-profit-min") || "";
+          var mx = tabs[i].getAttribute("data-profit-max") || "";
+          var on = mn === (minVal || "") && mx === (maxVal || "");
+          tabs[i].classList.toggle("is-active", on);
+          tabs[i].setAttribute("aria-selected", on ? "true" : "false");
+        }
+      }
+
+      function getSelectedProfitRange() {
+        var tabs = document.querySelectorAll(
+          "#filterProfitTabs .filter-tab");
+        for (var i = 0; i < tabs.length; i++) {
+          if (!tabs[i].classList.contains("is-active")) continue;
+          var mn = tabs[i].getAttribute("data-profit-min");
+          var mx = tabs[i].getAttribute("data-profit-max");
+          return {
+            minPr: mn === "" || mn == null ? null : parseInt(mn, 10),
+            maxPr: mx === "" || mx == null ? null : parseInt(mx, 10),
+          };
+        }
+        return { minPr: null, maxPr: null };
+      }
+
+      function setMarginTabActive(marginVal) {
+        var tabs = document.querySelectorAll(
+          "#filterMarginTabs .filter-tab");
+        for (var i = 0; i < tabs.length; i++) {
+          var val = tabs[i].getAttribute("data-margin") || "";
+          var on = val === (marginVal || "");
+          tabs[i].classList.toggle("is-active", on);
+          tabs[i].setAttribute("aria-selected", on ? "true" : "false");
+        }
+      }
+
+      function getSelectedMargin() {
+        var tabs = document.querySelectorAll(
+          "#filterMarginTabs .filter-tab");
+        for (var i = 0; i < tabs.length; i++) {
+          if (!tabs[i].classList.contains("is-active")) continue;
+          return tabs[i].getAttribute("data-margin") || "";
+        }
+        return "";
+      }
+
       function countAppliedFilters() {
         var n = 0;
         if (getSelectedCategoryFilter()) n++;
@@ -4049,6 +4188,11 @@
         if ($("filterUndervalued") && $("filterUndervalued").checked) n++;
         if ($("filterHasPhotos") && $("filterHasPhotos").checked) n++;
         if (getSelectedLeaseMinMonths() != null) n++;
+        var rr = getSelectedRevenueRange();
+        if (rr.minR != null || rr.maxR != null) n++;
+        var pr2 = getSelectedProfitRange();
+        if (pr2.minPr != null || pr2.maxPr != null) n++;
+        if (getSelectedMargin()) n++;
         return n;
       }
 
@@ -4177,6 +4321,9 @@
         var undervalued = $("filterUndervalued") && $("filterUndervalued").checked;
         var photosOnly = $("filterHasPhotos") && $("filterHasPhotos").checked;
         var leaseMin = getSelectedLeaseMinMonths();
+        var revRange = getSelectedRevenueRange();
+        var profitRange = getSelectedProfitRange();
+        var marginFilter = getSelectedMargin();
         var sortKey = ($("filterSort") && $("filterSort").value) || "newest";
 
         var filtered = all.filter(function (item) {
@@ -4211,6 +4358,40 @@
           if (leaseMin != null) {
             var lm = item.leaseRemainingMonths;
             if (lm == null || !isFinite(lm) || lm < leaseMin) return false;
+          }
+
+          // 월 평균 매출 필터
+          if (revRange.minR != null || revRange.maxR != null) {
+            var rev = item.monthlyRevenue;
+            if (rev == null || !isFinite(rev)) return false;
+            if (revRange.minR != null && rev < revRange.minR) return false;
+            if (revRange.maxR != null && rev > revRange.maxR) return false;
+          }
+
+          // 월 평균 영업이익 필터
+          if (profitRange.minPr != null || profitRange.maxPr != null) {
+            var adjProfit = getAdjustedMonthlyProfitFromItem(item);
+            if (adjProfit == null || !isFinite(adjProfit)) return false;
+            if (profitRange.minPr != null &&
+              adjProfit < profitRange.minPr) return false;
+            if (profitRange.maxPr != null &&
+              adjProfit > profitRange.maxPr) return false;
+          }
+
+          // 수익률 필터
+          if (marginFilter) {
+            var mRev = item.monthlyRevenue;
+            var mProfit = getAdjustedMonthlyProfitFromItem(item);
+            if (!mRev || !mProfit ||
+              !isFinite(mRev) || !isFinite(mProfit) || mRev <= 0)
+              return false;
+            var marginRate = (mProfit / mRev) * 100;
+            if (marginFilter === "under10" && marginRate >= 10)
+              return false;
+            if (marginFilter === "10to20" &&
+              (marginRate < 10 || marginRate >= 20)) return false;
+            if (marginFilter === "over20" && marginRate < 20)
+              return false;
           }
 
           return true;
@@ -4269,6 +4450,9 @@
         if ($("filterHasPhotos")) $("filterHasPhotos").checked = false;
         setLeaseTabActive("");
         if ($("filterSort")) $("filterSort").value = "newest";
+        setRevenueTabActive("", "");
+        setProfitTabActive("", "");
+        setMarginTabActive("");
       }
 
       function updateValuationUI() {
@@ -7177,6 +7361,45 @@
           renderList().catch(function (err) {
             console.error(err);
           });
+        });
+      }
+
+      var filterRevenueTabsEl = $("filterRevenueTabs");
+      if (filterRevenueTabsEl) {
+        filterRevenueTabsEl.addEventListener("click", function(e) {
+          var tab = e.target &&
+            e.target.closest && e.target.closest(".filter-tab");
+          if (!tab || !filterRevenueTabsEl.contains(tab)) return;
+          setRevenueTabActive(
+            tab.getAttribute("data-rev-min") || "",
+            tab.getAttribute("data-rev-max") || ""
+          );
+          renderList().catch(function(err) { console.error(err); });
+        });
+      }
+
+      var filterProfitTabsEl = $("filterProfitTabs");
+      if (filterProfitTabsEl) {
+        filterProfitTabsEl.addEventListener("click", function(e) {
+          var tab = e.target &&
+            e.target.closest && e.target.closest(".filter-tab");
+          if (!tab || !filterProfitTabsEl.contains(tab)) return;
+          setProfitTabActive(
+            tab.getAttribute("data-profit-min") || "",
+            tab.getAttribute("data-profit-max") || ""
+          );
+          renderList().catch(function(err) { console.error(err); });
+        });
+      }
+
+      var filterMarginTabsEl = $("filterMarginTabs");
+      if (filterMarginTabsEl) {
+        filterMarginTabsEl.addEventListener("click", function(e) {
+          var tab = e.target &&
+            e.target.closest && e.target.closest(".filter-tab");
+          if (!tab || !filterMarginTabsEl.contains(tab)) return;
+          setMarginTabActive(tab.getAttribute("data-margin") || "");
+          renderList().catch(function(err) { console.error(err); });
         });
       }
 
