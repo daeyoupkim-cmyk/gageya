@@ -2339,6 +2339,12 @@
               <option value="newest">최신순</option>
               <option value="valAsc">추정가 낮은순</option>
               <option value="valDesc">추정가 높은순</option>
+              <option value="revDesc">매출 높은순</option>
+              <option value="revAsc">매출 낮은순</option>
+              <option value="profitDesc">영업이익 높은순</option>
+              <option value="profitAsc">영업이익 낮은순</option>
+              <option value="marginDesc">영업이익률 높은순</option>
+              <option value="marginAsc">영업이익률 낮은순</option>
             </select>
           </div>
           <div class="filter-actions">
@@ -4441,6 +4447,50 @@
             var c = sortVal(a, b, false);
             if (c !== 0) return c;
             return (b.createdAt || 0) - (a.createdAt || 0);
+          });
+        } else if (sortKey === "revDesc") {
+          filtered.sort(function(a, b) {
+            var va = a.monthlyRevenue || 0;
+            var vb = b.monthlyRevenue || 0;
+            return vb - va;
+          });
+        } else if (sortKey === "revAsc") {
+          filtered.sort(function(a, b) {
+            var va = a.monthlyRevenue || 0;
+            var vb = b.monthlyRevenue || 0;
+            return va - vb;
+          });
+        } else if (sortKey === "profitDesc") {
+          filtered.sort(function(a, b) {
+            var va = getAdjustedMonthlyProfitFromItem(a) || 0;
+            var vb = getAdjustedMonthlyProfitFromItem(b) || 0;
+            return vb - va;
+          });
+        } else if (sortKey === "profitAsc") {
+          filtered.sort(function(a, b) {
+            var va = getAdjustedMonthlyProfitFromItem(a) || 0;
+            var vb = getAdjustedMonthlyProfitFromItem(b) || 0;
+            return va - vb;
+          });
+        } else if (sortKey === "marginDesc") {
+          filtered.sort(function(a, b) {
+            var ra = a.monthlyRevenue;
+            var rb = b.monthlyRevenue;
+            var pa = getAdjustedMonthlyProfitFromItem(a);
+            var pb = getAdjustedMonthlyProfitFromItem(b);
+            var ma = (ra && pa && ra > 0) ? pa / ra : 0;
+            var mb = (rb && pb && rb > 0) ? pb / rb : 0;
+            return mb - ma;
+          });
+        } else if (sortKey === "marginAsc") {
+          filtered.sort(function(a, b) {
+            var ra = a.monthlyRevenue;
+            var rb = b.monthlyRevenue;
+            var pa = getAdjustedMonthlyProfitFromItem(a);
+            var pb = getAdjustedMonthlyProfitFromItem(b);
+            var ma = (ra && pa && ra > 0) ? pa / ra : 0;
+            var mb = (rb && pb && rb > 0) ? pb / rb : 0;
+            return ma - mb;
           });
         } else {
           filtered.sort(function (a, b) {
