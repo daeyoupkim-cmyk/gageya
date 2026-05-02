@@ -6554,15 +6554,24 @@
         });
       }
 
-      if ($("detailInterestBtn")) {
-        $("detailInterestBtn").addEventListener("click", function () {
-          var id = $("viewDetail") && $("viewDetail").dataset.currentId;
-          if (!id) return;
-          var cur = findById(id);
-          if (cur && normalizeListingStatus(cur) === "sold") return;
-          openInterestModal(id);
-        });
-      }
+      $("detailInterestBtn").addEventListener("click", async function() {
+        var id = $("viewDetail") && $("viewDetail").dataset.currentId;
+        if (!id) return;
+        var cur = findById(id);
+        if (cur && normalizeListingStatus(cur) === "sold") return;
+
+        var btn = $("detailInterestBtn");
+        if (btn) btn.disabled = true;
+
+        await recordInterestSubmission(id);
+        saveInterestRecord(id);
+        updateDetailInterestRow(id);
+
+        if (btn) {
+          btn.textContent = "관심 표명 완료 ✓";
+          btn.style.background = "var(--navy)";
+        }
+      });
       $("detailChatBtn").addEventListener("click", async function() {
         var id = $("viewDetail") && $("viewDetail").dataset.currentId;
         if (!id) return;
