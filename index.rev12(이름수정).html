@@ -2393,6 +2393,60 @@
           <p class="field-hint">최대 6개월까지 입력 가능합니다.</p>
         </div>
 
+        <div class="field">
+          <label for="monthlyRevenue">월 평균 매출 (만 원)</label>
+          <input type="number" id="monthlyRevenue"
+            name="monthlyRevenue" min="0" step="1"
+            inputmode="numeric" placeholder="예: 3000" />
+          <p class="field-hint">
+            숫자만 입력합니다. 참고용으로 표시됩니다.
+          </p>
+        </div>
+
+        <div class="val-field-block">
+          <span class="val-block-label">이익 입력 방식</span>
+          <div class="val-option-row" role="radiogroup"
+            aria-label="이익 입력 방식">
+            <input type="radio" name="profitInputMode"
+              id="profitInputModeMonthly" value="monthly"
+              class="val-radio-input" checked />
+            <label class="val-option"
+              for="profitInputModeMonthly">월 평균 입력</label>
+            <input type="radio" name="profitInputMode"
+              id="profitInputModeSix" value="sixMonth"
+              class="val-radio-input" />
+            <label class="val-option"
+              for="profitInputModeSix">최근 6개월 합계 입력</label>
+          </div>
+          <div id="monthlyProfitWrap" class="val-subfield field">
+            <label for="monthlyProfit">
+              월 평균 영업이익 (만 원)
+            </label>
+            <input type="number" id="monthlyProfit"
+              name="monthlyProfit" min="0" step="1"
+              inputmode="numeric" placeholder="예: 200" />
+            <p class="field-hint">
+              매출에서 임대료·재료비·인건비를 뺀 후
+              내 손에 남는 금액입니다. (세금 납부 전 기준)
+            </p>
+          </div>
+          <div id="sixMonthProfitWrap"
+            class="val-subfield field" hidden>
+            <label for="sixMonthProfit">
+              최근 6개월 영업이익 합계 (만 원)
+            </label>
+            <input type="number" id="sixMonthProfit"
+              name="sixMonthProfit" min="0" step="1"
+              inputmode="numeric" placeholder="예: 1200" />
+            <p class="field-hint">
+              매출에서 임대료·재료비·인건비를 뺀 후
+              내 손에 남는 금액의 6개월 합계입니다.
+              (세금 납부 전 기준) 월평균 = 합계 ÷ 6으로
+              자동 반영됩니다.
+            </p>
+          </div>
+        </div>
+
         <div class="val-field-block">
           <span class="val-block-label">매출 추세</span>
           <p class="field-hint">최근 1년 기준으로 선택해 주세요</p>
@@ -3758,81 +3812,37 @@
       }
 
       function buildValuationItemFromForm() {
-        // 월별 데이터에서 평균 영업이익 계산
-        var profitData = pendingMonthlyData.filter(function(d) {
-          return d.profit != null && d.profit > 0;
-        });
-        var monthlyProfit = null;
-        if (profitData.length > 0) {
-          monthlyProfit = profitData.reduce(function(s, d) {
-            return s + d.profit;
-          }, 0) / profitData.length;
-        }
-
-        // 월별 데이터에서 평균 매출 계산
-        var revenueData = pendingMonthlyData.filter(function(d) {
-          return d.revenue != null && d.revenue > 0;
-        });
-        var monthlyRevenue = null;
-        if (revenueData.length > 0) {
-          monthlyRevenue = revenueData.reduce(function(s, d) {
-            return s + d.revenue;
-          }, 0) / revenueData.length;
-        }
-
+        var profitMode =
+          (document.querySelector('input[name="profitInputMode"]:checked') || {}).value || "monthly";
+        var monthlyProfitRaw = $("monthlyProfit") ? $("monthlyProfit").value.trim() : "";
+        var sixRaw = $("sixMonthProfit") ? $("sixMonthProfit").value.trim() : "";
+        var monthlyProfit = monthlyProfitRaw === "" ? null : parseFloat(monthlyProfitRaw);
+        var sixMonthProfit = sixRaw === "" ? null : parseFloat(sixRaw);
         var ow =
-          (document.querySelector('input[name="ownerWorks"]:checked')
-          || {}).value === "yes";
-        var ohRaw = $("ownerWorkHours")
-          ? $("ownerWorkHours").value.trim() : "";
-        var ownerWorkHours = ohRaw === ""
-          ? null : parseFloat(ohRaw);
-        var liabRaw = $("liabilities")
-          ? $("liabilities").value.trim() : "";
+          (document.querySelector('input[name="ownerWorks"]:checked') || {}).value === "yes";
+        var ohRaw = $("ownerWorkHours") ? $("ownerWorkHours").value.trim() : "";
+        var ownerWorkHours = ohRaw === "" ? null : parseFloat(ohRaw);
+        var liabRaw = $("liabilities") ? $("liabilities").value.trim() : "";
         var liabilities = liabRaw === "" ? 0 : parseFloat(liabRaw);
-        var staffRaw = $("staffCount")
-          ? $("staffCount").value.trim() : "";
-        var staffCount = staffRaw === ""
-          ? 0 : parseInt(staffRaw, 10);
-
+        var staffRaw = $("staffCount") ? $("staffCount").value.trim() : "";
+        var staffCount = staffRaw === "" ? 0 : parseInt(staffRaw, 10);
         return {
           category: $("category") ? $("category").value : "",
-          profitInputMode: "monthly",
+          profitInputMode: profitMode,
           monthlyProfit: monthlyProfit,
-          sixMonthProfit: null,
-          revenueTrend:
-            (document.querySelector(
-              'input[name="revenueTrend"]:checked') || {}).value
-            || "stable",
+          sixMonthProfit: sixMonthProfit,
+          revenueTrend: (document.querySelector('input[name="revenueTrend"]:checked') || {}).value || "stable",
           ownerWorks: ow,
           ownerWorkHours: ownerWorkHours,
-          seasonality:
-            (document.querySelector(
-              'input[name="seasonality"]:checked') || {}).value
-            || "none",
-          leaseRenewal:
-            (document.querySelector(
-              'input[name="leaseRenewal"]:checked') || {}).value
-            || "unknown",
-          deliveryRatio:
-            (document.querySelector(
-              'input[name="deliveryRatio"]:checked') || {}).value
-            || "none",
+          seasonality: (document.querySelector('input[name="seasonality"]:checked') || {}).value || "none",
+          leaseRenewal: (document.querySelector('input[name="leaseRenewal"]:checked') || {}).value || "unknown",
+          deliveryRatio: (document.querySelector('input[name="deliveryRatio"]:checked') || {}).value || "none",
           staffCount: isNaN(staffCount) ? 0 : staffCount,
-          staffStays:
-            (document.querySelector(
-              'input[name="staffStays"]:checked') || {}).value
-            || "yes",
-          equipmentAge:
-            (document.querySelector(
-              'input[name="equipmentAge"]:checked') || {}).value
-            || "mid",
-          liabilities:
-            isNaN(liabilities) || liabilities < 0 ? 0 : liabilities,
+          staffStays: (document.querySelector('input[name="staffStays"]:checked') || {}).value || "yes",
+          equipmentAge: (document.querySelector('input[name="equipmentAge"]:checked') || {}).value || "mid",
+          liabilities: isNaN(liabilities) || liabilities < 0 ? 0 : liabilities,
           revenueVerifiable:
-            (document.querySelector(
-              'input[name="revenueVerifiable"]:checked') || {}).value
-            !== "no",
+            (document.querySelector('input[name="revenueVerifiable"]:checked') || {}).value !== "no",
         };
       }
 
@@ -6776,27 +6786,16 @@
           return d.revenue != null || d.profit != null;
         });
 
-        var avgRevenue = null;
-        var revenueData = validData.filter(function(d) {
-          return d.revenue != null;
-        });
-        if (revenueData.length > 0) {
-          avgRevenue = revenueData.reduce(function(s, d) {
-            return s + d.revenue;
-          }, 0) / revenueData.length;
-        }
-
-        var avgProfit = null;
-        var profitData = validData.filter(function(d) {
-          return d.profit != null;
-        });
-        if (profitData.length > 0) {
-          avgProfit = profitData.reduce(function(s, d) {
-            return s + d.profit;
-          }, 0) / profitData.length;
-        }
-
+        var monthlyRevenue = parseOptionalInt($("monthlyRevenue"));
         var vForm = buildValuationItemFromForm();
+        var monthlyProfit = vForm.monthlyProfit;
+        if (monthlyProfit != null && (isNaN(monthlyProfit) || monthlyProfit < 0)) {
+          monthlyProfit = null;
+        }
+        var sixMonthProfit = vForm.sixMonthProfit;
+        if (sixMonthProfit != null && (isNaN(sixMonthProfit) || sixMonthProfit < 0)) {
+          sixMonthProfit = null;
+        }
 
         var newItem = {
           id: uuid(),
@@ -6807,10 +6806,10 @@
           description: description,
           contact: contact,
           sellerEmail: sellerEmail,
-          monthlyRevenue: avgRevenue,
-          monthlyProfit: avgProfit,
-          profitInputMode: "monthly",
-          sixMonthProfit: null,
+          monthlyRevenue: monthlyRevenue,
+          monthlyProfit: monthlyProfit,
+          profitInputMode: vForm.profitInputMode,
+          sixMonthProfit: sixMonthProfit,
           revenueTrend: vForm.revenueTrend,
           ownerWorks: vForm.ownerWorks,
           ownerWorkHours: vForm.ownerWorkHours,
