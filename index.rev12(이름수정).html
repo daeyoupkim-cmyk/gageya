@@ -2416,13 +2416,6 @@
           <input type="text" id="contact" name="contact" maxlength="80" placeholder="예: 카카오 ID, 이메일 (공개됩니다)" />
         </div>
         <div class="field">
-          <label for="sellerEmail">알림 받을 이메일 주소 (선택)</label>
-          <input type="email" id="sellerEmail" name="sellerEmail"
-            maxlength="120"
-            placeholder="관심 표명 시 이 주소로 알림이 발송됩니다" />
-          <p class="field-hint">공개되지 않으며 관심 표명 알림 수신에만 사용됩니다.</p>
-        </div>
-        <div class="field">
           <label for="listingPhoto">사진 (선택)</label>
           <p class="field-hint">최대 5장까지 선택할 수 있습니다.</p>
           <input type="file" id="listingPhoto" name="listingPhoto" accept="image/*" multiple />
@@ -4210,7 +4203,7 @@
             price: $("price").value,
             description: $("description").value,
             contact: $("contact").value,
-            sellerEmail: $("sellerEmail").value,
+            sellerEmail: $("sellerEmail") ? $("sellerEmail").value : "",
           };
           localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
         } catch (e) {}
