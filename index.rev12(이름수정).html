@@ -2033,6 +2033,10 @@
           <div class="home-cta-actions">
             <button type="button" class="btn btn-primary" id="homeCtaList">매물 보기</button>
             <button type="button" class="btn btn-ghost btn-ghost-on-navy" id="homeCtaRegister">매물 등록하기</button>
+            <button type="button" class="btn btn-ghost btn-ghost-on-navy"
+              id="pwaInstallBtn" style="display:none;">
+              📲 앱 설치하기
+            </button>
           </div>
         </div>
       </div>
@@ -7092,6 +7096,26 @@
         setupSimulatorListeners();
       }
 
+      var pwaInstallBtnEl = document.getElementById("pwaInstallBtn");
+      if (pwaInstallBtnEl) {
+        pwaInstallBtnEl.addEventListener("click", async function() {
+          if (!pwaInstallPrompt) {
+            alert(
+              "앱 설치 방법\n\n" +
+              "iPhone: 사파리 하단 공유버튼 → 홈 화면에 추가\n" +
+              "Android: 크롬 메뉴(점 세 개) → 앱 설치"
+            );
+            return;
+          }
+          pwaInstallPrompt.prompt();
+          var result = await pwaInstallPrompt.userChoice;
+          if (result.outcome === "accepted") {
+            pwaInstallPrompt = null;
+            pwaInstallBtnEl.style.display = "none";
+          }
+        });
+      }
+
       async function initApp() {
         // 비밀번호 재설정 링크로 접근했는지 확인
         var hashParams = new URLSearchParams(window.location.hash.replace("#", ""));
@@ -7132,6 +7156,21 @@
         });
     });
   }
+
+  var pwaInstallPrompt = null;
+
+  window.addEventListener("beforeinstallprompt", function(e) {
+    e.preventDefault();
+    pwaInstallPrompt = e;
+    var btn = document.getElementById("pwaInstallBtn");
+    if (btn) btn.style.display = "inline-flex";
+  });
+
+  window.addEventListener("appinstalled", function() {
+    pwaInstallPrompt = null;
+    var btn = document.getElementById("pwaInstallBtn");
+    if (btn) btn.style.display = "none";
+  });
   </script>
 </body>
 </html>
