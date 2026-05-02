@@ -2648,6 +2648,34 @@
           <h2>연락처</h2>
           <p id="detailContact"></p>
         </div>
+        <div id="detailDocsWrap" style="
+          margin-top:1rem;
+          padding-top:1rem;
+          border-top:1px solid var(--border);" hidden>
+          <h2>매출 증빙 서류</h2>
+          <div id="detailDocsList" style="
+            display:flex;
+            flex-direction:column;
+            gap:0.5rem;
+            margin-bottom:0.75rem;"></div>
+          <div id="detailDocsUploadWrap" hidden>
+            <p style="font-size:0.82rem;color:var(--muted);
+              margin:0 0 0.5rem;line-height:1.5;">
+              홈택스 부가가치세과세표준증명, 카드매출내역 등<br/>
+              PDF 또는 이미지 파일 (최대 5MB)
+            </p>
+            <input type="file" id="detailDocsFile"
+              accept="image/jpeg,image/png,application/pdf"
+              style="font-size:0.85rem;margin-bottom:0.5rem;" />
+            <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+              <button type="button" class="btn btn-secondary"
+                id="detailDocsUploadBtn"
+                style="font-size:0.82rem;">
+                서류 업로드
+              </button>
+            </div>
+          </div>
+        </div>
         <div class="detail-delete-wrap" id="detailDeleteWrap" hidden>
           <div class="detail-owner-actions">
             <button type="button" class="btn btn-outline" id="detailEditBtn">매물 수정</button>
@@ -4326,6 +4354,136 @@
         } catch (e) {
           return [];
         }
+      }
+
+      // 서류 목록 불러오기
+      async function loadListingDocs(listingId) {
+        try {
+          var res = await sb.storage
+            .from("listing-docs")
+            .list(listingId + "/");
+          if (res.error) throw res.error;
+          return res.data || [];
+        } catch(e) {
+          console.error(e);
+          return [];
+        }
+      }
+
+      // 서류 URL 가져오기
+      async function getDocUrl(listingId, fileName) {
+        try {
+          var res = await sb.storage
+            .from("listing-docs")
+            .createSignedUrl(listingId + "/" + fileName, 3600);
+          if (res.error) throw res.error;
+          return res.data.signedUrl;
+        } catch(e) {
+          console.error(e);
+          return null;
+        }
+      }
+
+      // 서류 삭제
+      async function deleteDoc(listingId, fileName) {
+        try {
+          var res = await sb.storage
+            .from("listing-docs")
+            .remove([listingId + "/" + fileName]);
+          if (res.error) throw res.error;
+          return true;
+        } catch(e) {
+          console.error(e);
+          return false;
+        }
+      }
+
+      // 서류 섹션 렌더링
+      async function renderDetailDocs(listingId) {
+        var wrap = $("detailDocsWrap");
+        var list = $("detailDocsList");
+        var uploadWrap = $("detailDocsUploadWrap");
+        if (!wrap || !list) return;
+
+        var item = findById(listingId);
+        var isOwner = currentUser && item &&
+          item.userId === currentUser.id;
+
+        var docs = await loadListingDocs(listingId);
+
+        // 서류 있거나 오너면 섹션 표시
+        if (docs.length > 0 || isOwner) {
+          wrap.hidden = false;
+        } else {
+          wrap.hidden = true;
+          return;
+        }
+
+        // 업로드 폼은 오너만
+        if (uploadWrap) uploadWrap.hidden = !isOwner;
+
+        list.innerHTML = "";
+
+        if (docs.length === 0) {
+          list.innerHTML =
+            '<p style="font-size:0.82rem;color:var(--muted);' +
+            'margin:0 0 0.5rem;">등록된 증빙 서류가 없습니다.</p>';
+          return;
+        }
+
+        docs.forEach(function(doc) {
+          var row = document.createElement("div");
+          row.style.cssText =
+            "display:flex;align-items:center;gap:0.5rem;" +
+            "padding:0.55rem 0.75rem;" +
+            "background:var(--bg);border-radius:var(--radius);" +
+            "border:1px solid var(--border);";
+
+          var ext = doc.name.split(".").pop().toLowerCase();
+          var icon = ext === "pdf" ? "📄" : "🖼️";
+
+          var nameSpan = document.createElement("span");
+          nameSpan.style.cssText =
+            "flex:1;font-size:0.82rem;color:var(--text);" +
+            "overflow:hidden;text-overflow:ellipsis;" +
+            "white-space:nowrap;";
+          nameSpan.textContent = icon + " " + doc.name;
+
+          var viewBtn = document.createElement("button");
+          viewBtn.type = "button";
+          viewBtn.className = "btn btn-ghost";
+          viewBtn.style.cssText =
+            "font-size:0.75rem;padding:0.3rem 0.6rem;flex-shrink:0;";
+          viewBtn.textContent = "열기";
+          viewBtn.addEventListener("click", async function() {
+            var url = await getDocUrl(listingId, doc.name);
+            if (url) window.open(url, "_blank");
+            else alert("파일을 열 수 없습니다.");
+          });
+
+          row.appendChild(nameSpan);
+          row.appendChild(viewBtn);
+
+          // 오너만 삭제 버튼 표시
+          if (isOwner) {
+            var delBtn = document.createElement("button");
+            delBtn.type = "button";
+            delBtn.className = "btn btn-ghost";
+            delBtn.style.cssText =
+              "font-size:0.75rem;padding:0.3rem 0.6rem;" +
+              "color:var(--orange);flex-shrink:0;";
+            delBtn.textContent = "삭제";
+            delBtn.addEventListener("click", async function() {
+              if (!confirm("이 서류를 삭제하시겠습니까?")) return;
+              var ok = await deleteDoc(listingId, doc.name);
+              if (ok) await renderDetailDocs(listingId);
+              else alert("삭제에 실패했습니다.");
+            });
+            row.appendChild(delBtn);
+          }
+
+          list.appendChild(row);
+        });
       }
 
       async function getOrCreateChatRoom(listingId, sellerId) {
@@ -6044,6 +6202,10 @@
             });
           }
         }, 0);
+        // 증빙 서류 섹션 렌더링
+        renderDetailDocs(id).catch(function(e) {
+          console.error(e);
+        });
         showView("detail");
       }
 
@@ -6639,6 +6801,60 @@
         var room = await getOrCreateChatRoom(id, item.userId);
         if (room) openChatRoom(id, room.id);
       });
+
+      var detailDocsUploadBtnEl = $("detailDocsUploadBtn");
+      if (detailDocsUploadBtnEl) {
+        detailDocsUploadBtnEl.addEventListener(
+          "click", async function() {
+            if (!currentUser) {
+              alert("로그인 후 이용할 수 있습니다.");
+              return;
+            }
+            var fileInput = $("detailDocsFile");
+            var file = fileInput && fileInput.files[0];
+            if (!file) {
+              alert("파일을 선택해 주세요.");
+              return;
+            }
+            if (file.size > 5 * 1024 * 1024) {
+              alert("파일 크기는 5MB 이하만 가능합니다.");
+              return;
+            }
+            var allowed = [
+              "image/jpeg", "image/png", "application/pdf"
+            ];
+            if (allowed.indexOf(file.type) === -1) {
+              alert("JPG, PNG, PDF 파일만 업로드 가능합니다.");
+              return;
+            }
+            var listingId =
+              $("viewDetail") && $("viewDetail").dataset.currentId;
+            if (!listingId) return;
+
+            detailDocsUploadBtnEl.disabled = true;
+            detailDocsUploadBtnEl.textContent = "업로드 중...";
+
+            try {
+              var fileName =
+                currentUser.id + "/" + Date.now() +
+                "_" + file.name;
+              var path = listingId + "/" + fileName;
+              var res = await sb.storage
+                .from("listing-docs")
+                .upload(path, file, { upsert: false });
+              if (res.error) throw res.error;
+              if (fileInput) fileInput.value = "";
+              await renderDetailDocs(listingId);
+              alert("서류가 업로드되었습니다.");
+            } catch(e) {
+              console.error(e);
+              alert("업로드에 실패했습니다. 다시 시도해 주세요.");
+            } finally {
+              detailDocsUploadBtnEl.disabled = false;
+              detailDocsUploadBtnEl.textContent = "서류 업로드";
+            }
+          });
+      }
 
       if ($("detailEditBtn")) {
         $("detailEditBtn").addEventListener("click", function () {
