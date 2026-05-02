@@ -3758,7 +3758,7 @@
       }
 
       function buildValuationItemFromForm() {
-        // 월별 데이터에서 평균 영업이익 자동 계산
+        // 월별 데이터에서 평균 영업이익 계산
         var profitData = pendingMonthlyData.filter(function(d) {
           return d.profit != null && d.profit > 0;
         });
@@ -3769,7 +3769,7 @@
           }, 0) / profitData.length;
         }
 
-        // 월별 데이터에서 평균 매출 자동 계산
+        // 월별 데이터에서 평균 매출 계산
         var revenueData = pendingMonthlyData.filter(function(d) {
           return d.revenue != null && d.revenue > 0;
         });
@@ -3781,30 +3781,58 @@
         }
 
         var ow =
-          (document.querySelector('input[name="ownerWorks"]:checked') || {}).value === "yes";
-        var ohRaw = $("ownerWorkHours") ? $("ownerWorkHours").value.trim() : "";
-        var ownerWorkHours = ohRaw === "" ? null : parseFloat(ohRaw);
-        var liabRaw = $("liabilities") ? $("liabilities").value.trim() : "";
+          (document.querySelector('input[name="ownerWorks"]:checked')
+          || {}).value === "yes";
+        var ohRaw = $("ownerWorkHours")
+          ? $("ownerWorkHours").value.trim() : "";
+        var ownerWorkHours = ohRaw === ""
+          ? null : parseFloat(ohRaw);
+        var liabRaw = $("liabilities")
+          ? $("liabilities").value.trim() : "";
         var liabilities = liabRaw === "" ? 0 : parseFloat(liabRaw);
-        var staffRaw = $("staffCount") ? $("staffCount").value.trim() : "";
-        var staffCount = staffRaw === "" ? 0 : parseInt(staffRaw, 10);
+        var staffRaw = $("staffCount")
+          ? $("staffCount").value.trim() : "";
+        var staffCount = staffRaw === ""
+          ? 0 : parseInt(staffRaw, 10);
+
         return {
           category: $("category") ? $("category").value : "",
+          profitInputMode: "monthly",
           monthlyProfit: monthlyProfit,
           sixMonthProfit: null,
-          profitInputMode: "monthly",
-          revenueTrend: (document.querySelector('input[name="revenueTrend"]:checked') || {}).value || "stable",
+          revenueTrend:
+            (document.querySelector(
+              'input[name="revenueTrend"]:checked') || {}).value
+            || "stable",
           ownerWorks: ow,
           ownerWorkHours: ownerWorkHours,
-          seasonality: (document.querySelector('input[name="seasonality"]:checked') || {}).value || "none",
-          leaseRenewal: (document.querySelector('input[name="leaseRenewal"]:checked') || {}).value || "unknown",
-          deliveryRatio: (document.querySelector('input[name="deliveryRatio"]:checked') || {}).value || "none",
+          seasonality:
+            (document.querySelector(
+              'input[name="seasonality"]:checked') || {}).value
+            || "none",
+          leaseRenewal:
+            (document.querySelector(
+              'input[name="leaseRenewal"]:checked') || {}).value
+            || "unknown",
+          deliveryRatio:
+            (document.querySelector(
+              'input[name="deliveryRatio"]:checked') || {}).value
+            || "none",
           staffCount: isNaN(staffCount) ? 0 : staffCount,
-          staffStays: (document.querySelector('input[name="staffStays"]:checked') || {}).value || "yes",
-          equipmentAge: (document.querySelector('input[name="equipmentAge"]:checked') || {}).value || "mid",
-          liabilities: isNaN(liabilities) || liabilities < 0 ? 0 : liabilities,
+          staffStays:
+            (document.querySelector(
+              'input[name="staffStays"]:checked') || {}).value
+            || "yes",
+          equipmentAge:
+            (document.querySelector(
+              'input[name="equipmentAge"]:checked') || {}).value
+            || "mid",
+          liabilities:
+            isNaN(liabilities) || liabilities < 0 ? 0 : liabilities,
           revenueVerifiable:
-            (document.querySelector('input[name="revenueVerifiable"]:checked') || {}).value !== "no",
+            (document.querySelector(
+              'input[name="revenueVerifiable"]:checked') || {}).value
+            !== "no",
         };
       }
 
