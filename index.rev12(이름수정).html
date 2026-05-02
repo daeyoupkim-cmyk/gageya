@@ -3259,6 +3259,7 @@
           revenueVerifiable: row.revenue_verifiable,
           keyMoneyIncluded: row.key_money_included,
           leaseRemainingMonths: row.lease_remaining_months,
+          monthlyData: row.monthly_data || null,
           photos: row.photos == null ? [] : row.photos,
           isSample: !!row.is_sample,
           createdAt: row.created_at,
@@ -3295,6 +3296,8 @@
           revenue_verifiable: item.revenueVerifiable,
           key_money_included: item.keyMoneyIncluded,
           lease_remaining_months: item.leaseRemainingMonths,
+          monthly_data: item.monthlyData &&
+            item.monthlyData.length ? item.monthlyData : null,
           photos: item.photos && item.photos.length ? item.photos : [],
           status: item.status != null && item.status !== "" ? item.status : null,
           is_sample: !!item.isSample,
