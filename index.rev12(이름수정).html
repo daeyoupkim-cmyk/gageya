@@ -3043,6 +3043,7 @@
       var SUPABASE_URL = "https://dckhkwgxdwlaultcggte.supabase.co";
       var SUPABASE_ANON_KEY =
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRja2hrd2d4ZHdsYXVsdGNnZ3RlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5NjUwOTEsImV4cCI6MjA5MTU0MTA5MX0.o252rUa6cZEcVc04h1PmiJmKC-L7msz8HHBluEdmzBo";
+      var VAPID_PUBLIC_KEY = "BMsK7Bj3_3UBu3_smZFUg_uAZDa381IKic2hREOYJb2DpDju_EZPPcCcco9BzmWVu09pBUeqs0KF8iBoOEH78oc";
       var sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
       var listingsCache = [];
       var interestCountsCache = {};
@@ -4317,6 +4318,82 @@
         }
       }
 
+      function urlBase64ToUint8Array(base64String) {
+        var padding = "=".repeat((4 - base64String.length % 4) % 4);
+        var base64 = (base64String + padding)
+          .replace(/-/g, "+").replace(/_/g, "/");
+        var rawData = window.atob(base64);
+        var outputArray = new Uint8Array(rawData.length);
+        for (var i = 0; i < rawData.length; ++i) {
+          outputArray[i] = rawData.charCodeAt(i);
+        }
+        return outputArray;
+      }
+
+      async function subscribePushNotification() {
+        try {
+          if (!("serviceWorker" in navigator) ||
+              !("PushManager" in window)) return;
+          if (!currentUser) return;
+
+          var reg = await navigator.serviceWorker.ready;
+          var permission = await Notification.requestPermission();
+          if (permission !== "granted") return;
+
+          var subscription = await reg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+          });
+
+          await sb.from("push_subscriptions").upsert({
+            user_id: currentUser.id,
+            subscription: subscription.toJSON(),
+            created_at: Date.now(),
+          });
+          console.log("Push 구독 완료");
+        } catch(e) {
+          console.error("Push 구독 실패:", e);
+        }
+      }
+
+      async function sendChatNotification(roomId, content, listingId) {
+        try {
+          var item = findById(listingId);
+          if (!item) return;
+
+          // 수신자: 내가 buyer면 seller에게, 내가 seller면 buyer에게
+          var room = null;
+          var roomRes = await sb
+            .from("chat_rooms")
+            .select("*")
+            .eq("id", roomId)
+            .maybeSingle();
+          if (roomRes.data) room = roomRes.data;
+          if (!room) return;
+
+          var recipientId = currentUser.id === room.buyer_id
+            ? room.seller_id : room.buyer_id;
+
+          // 판매자 이메일 (item.sellerEmail 또는 별도 조회)
+          var sellerEmail = null;
+          if (recipientId) {
+            // Edge Function 호출
+            await sb.functions.invoke("send-notifications", {
+              body: {
+                room_id: roomId,
+                sender_id: currentUser.id,
+                content: content,
+                store_name: item.storeName,
+                seller_id: recipientId,
+                seller_email: sellerEmail,
+              },
+            });
+          }
+        } catch(e) {
+          console.error("알림 발송 실패:", e);
+        }
+      }
+
       async function sendChatMessage(roomId, content) {
         if (!currentUser || !content.trim()) return;
         try {
@@ -4327,6 +4404,24 @@
             created_at: Date.now(),
           });
           if (res.error) throw res.error;
+          // 알림 발송 (비동기, 실패해도 무관)
+          if (currentRoomId) {
+            var chatViewDetail = $("viewDetail");
+            var currentListingId = chatViewDetail
+              ? chatViewDetail.dataset.currentId : null;
+            // currentRoomId의 listing_id 찾기
+            sb.from("chat_rooms")
+              .select("listing_id")
+              .eq("id", roomId)
+              .maybeSingle()
+              .then(function(r) {
+                if (r.data) {
+                  sendChatNotification(
+                    roomId, content, r.data.listing_id
+                  );
+                }
+              });
+          }
         } catch(e) {
           console.error(e);
         }
@@ -5323,6 +5418,9 @@
           if (myListingsBtn) myListingsBtn.classList.remove("nav-auth-hidden");
           if (myInterestsBtn) myInterestsBtn.classList.remove("nav-auth-hidden");
           if (chatBtn) chatBtn.classList.remove("nav-auth-hidden");
+          setTimeout(function() {
+            subscribePushNotification();
+          }, 2000);
         } else {
           if (loginBtn) loginBtn.classList.remove("nav-auth-hidden");
           if (logoutBtn) logoutBtn.classList.add("nav-auth-hidden");
