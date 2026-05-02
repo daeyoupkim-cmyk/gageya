@@ -2253,6 +2253,13 @@
             <input type="checkbox" id="filterHasPhotos" />
             <label for="filterHasPhotos">사진 있는 매물만</label>
           </div>
+          <div class="filter-toggle-row">
+            <input type="checkbox" id="filterHasMonthlyData" />
+            <label for="filterHasMonthlyData">실적 공개 매물만</label>
+            <p class="filter-toggle-hint">
+              3개월 이상 월별 매출·영업이익이 공개된 매물만 표시됩니다.
+            </p>
+          </div>
           <div class="filter-tabs-wrap">
             <span class="filter-label">월 평균 매출 (만원)</span>
             <div class="filter-tabs" id="filterRevenueTabs"
@@ -4187,6 +4194,8 @@
         if ($("filterOnlyAvailable") && $("filterOnlyAvailable").checked) n++;
         if ($("filterUndervalued") && $("filterUndervalued").checked) n++;
         if ($("filterHasPhotos") && $("filterHasPhotos").checked) n++;
+        if ($("filterHasMonthlyData") &&
+          $("filterHasMonthlyData").checked) n++;
         if (getSelectedLeaseMinMonths() != null) n++;
         var rr = getSelectedRevenueRange();
         if (rr.minR != null || rr.maxR != null) n++;
@@ -4321,6 +4330,8 @@
         var undervalued = $("filterUndervalued") && $("filterUndervalued").checked;
         var photosOnly = $("filterHasPhotos") && $("filterHasPhotos").checked;
         var leaseMin = getSelectedLeaseMinMonths();
+        var onlyMonthlyData = $("filterHasMonthlyData") &&
+          $("filterHasMonthlyData").checked;
         var revRange = getSelectedRevenueRange();
         var profitRange = getSelectedProfitRange();
         var marginFilter = getSelectedMargin();
@@ -4358,6 +4369,15 @@
           if (leaseMin != null) {
             var lm = item.leaseRemainingMonths;
             if (lm == null || !isFinite(lm) || lm < leaseMin) return false;
+          }
+
+          if (onlyMonthlyData) {
+            if (!item.monthlyData || item.monthlyData.length < 3)
+              return false;
+            var validCount = item.monthlyData.filter(function(d) {
+              return d.revenue != null || d.profit != null;
+            }).length;
+            if (validCount < 3) return false;
           }
 
           // 월 평균 매출 필터
@@ -4448,6 +4468,8 @@
         if ($("filterOnlyAvailable")) $("filterOnlyAvailable").checked = true;
         if ($("filterUndervalued")) $("filterUndervalued").checked = false;
         if ($("filterHasPhotos")) $("filterHasPhotos").checked = false;
+        if ($("filterHasMonthlyData"))
+          $("filterHasMonthlyData").checked = false;
         setLeaseTabActive("");
         if ($("filterSort")) $("filterSort").value = "newest";
         setRevenueTabActive("", "");
@@ -7424,6 +7446,9 @@
       if ($("filterOnlyAvailable")) $("filterOnlyAvailable").addEventListener("change", renderListOnChange);
       if ($("filterUndervalued")) $("filterUndervalued").addEventListener("change", renderListOnChange);
       if ($("filterHasPhotos")) $("filterHasPhotos").addEventListener("change", renderListOnChange);
+      if ($("filterHasMonthlyData"))
+        $("filterHasMonthlyData").addEventListener(
+          "change", renderListOnChange);
       if ($("filterSort")) $("filterSort").addEventListener("change", renderListOnChange);
 
       var filterCollapseToggleEl = $("filterCollapseToggle");
